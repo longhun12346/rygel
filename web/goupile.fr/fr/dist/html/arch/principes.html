@@ -1,0 +1,385 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Utilisation de Goupile" href="utilisation.html" /><link rel="prev" title="Utilisation en routine" href="../user/routine.html" />
+
+    <meta name="generator" content="sphinx-5.0.1, furo 2022.06.04.1"/>
+        <title>Principes généraux - Goupile</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=40978830699223671f4072448e654b5958f38b89" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  --color-brand-primary: #FF6600;
+  --color-brand-content: #FF6600;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #FF6600;
+  --color-brand-content: #FF6600;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #FF6600;
+  --color-brand-content: #FF6600;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Goupile</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  
+  <span class="sidebar-brand-text">Goupile</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../user/introduction.html">Présentation de Goupile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/administration.html">Administration globale</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/projet.html">Développement d’un projet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/routine.html">Utilisation en routine</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Principes généraux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilisation.html">Utilisation de Goupile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serveur.html">Architecture du serveur</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation de Goupile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developpement.html">Développement de Goupile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hds.html">Configuration serveur HDS</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="principes-generaux">
+<h1>Principes généraux<a class="headerlink" href="#principes-generaux" title="Permalink to this heading">#</a></h1>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">#</a></h2>
+<p>Goupile permet de concevoir un eCRF avec une approche un peu différente des outils habituels, puisqu’il s’agit de programmer le contenu des formulaires, tout en automatisant les autres aspects communs à tous les eCRF :</p>
+<ul class="simple">
+<li><p>Types de champs préprogrammés et flexibles</p></li>
+<li><p>Publication des formulaires</p></li>
+<li><p>Enregistrement et synchronisation des données</p></li>
+<li><p>Recueil en ligne et hors ligne, sur ordinateur, tablette ou mobile</p></li>
+<li><p>Gestion des utilisateurs et droits</p></li>
+</ul>
+<p>En plus des fonctionnalités habituelles, nous nous sommes efforcés de réduire au maximum le délai entre le développement d’un formulaire et la saisie des données.</p>
+<p>Il s’agit d’un <em>outil en développement</em> et certains choix sont encore en cours. Les indications <strong>[WIP]</strong> désignent des fonctionnalités ou options en cours de développement ou d’amélioration.</p>
+<p>Même si une version publique compilée n’est pas encore disponible, vous pouvez tester la <a class="reference external" href="https://goupile.fr/demo/">démo en ligne</a>.</p>
+</section>
+<section id="domaines-et-projets">
+<h2>Domaines et projets<a class="headerlink" href="#domaines-et-projets" title="Permalink to this heading">#</a></h2>
+<p>Chaque service Goupile dispose d’un domaine (ou sous-domaine). Par exemple, <a class="reference external" href="https://demo.goupile.fr/">demo.goupile.fr</a> et <a class="reference external" href="https://psy-lille.goupile.fr/">psy-lille.goupile.fr</a> sont des services distincts avec des bases de données séparées et des utilisateurs différents (même si possiblement hébergés sur un même serveur).</p>
+<p>Lors de la création d’un domaine, un (ou plusieurs) administrateurs de confiance sont désignés pour en gérer les projets et les utilisateurs. Une paire de clé de chiffrement est générée pour réaliser les backups des bases de données du domaine. La clé publique est stockée sur le serveur pour créer les backups. La clé privée est confiée aux administrateurs désignés et n’est pas stockée; sa perte <strong>entraîne la perte de tous les backups</strong> de ce domaine.</p>
+<p><em>Les détails sur le chiffrement utilisé sont détaillés dans la section sur les <a class="reference internal" href="serveur.html"><span class="doc std std-doc">choix architecturaux</span></a>.</em></p>
+<p>Ce sont les administrateurs qui peuvent créér les projets et leur affecter des utilisateurs, soit pour qu’ils conçoivent les formulaires, soit pour qu’ils y saisissent les données.</p>
+</section>
+<section id="gestion-des-utilisateurs">
+<h2>Gestion des utilisateurs<a class="headerlink" href="#gestion-des-utilisateurs" title="Permalink to this heading">#</a></h2>
+<p>Chaque domaine Goupile contient une liste d’utilisateurs.</p>
+<figure class="align-default" id="id1">
+<a class="bg-primary mb-1 reference internal image-reference" href="../_images/admin.webp"><img alt="Interface d'administration" class="bg-primary mb-1" src="../_images/admin.webp" style="width: 200px;" /></a>
+<figcaption>
+<p><span class="caption-text">Gérez vos projets et vos utilisateurs au sein du module d’administration</span><a class="headerlink" href="#id1" title="Permalink to this image">#</a></p>
+</figcaption>
+</figure>
+<p>Ces comptes utilisateurs sont gérés par le ou les administrateurs désignés pour ce domaine, qui peuvent les créer, les modifier et les supprimer.</p>
+<p>Chaque utilisateur peut être affecté à un ou plusieurs projets, avec un ensemble de droits en fonction de ses préprogatives. Il existe deux ensembles de droits :</p>
+<ul class="simple">
+<li><p><em>Droits de développement</em>, qui permettent de configurer un projet et ses formulaires</p></li>
+<li><p><em>Droits d’accès</em>, qui permettent d’accéder aux données</p></li>
+</ul>
+<p>Ces droits sont détaillés dans les tableaux qui suivent :</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Droit</p></th>
+<th class="head"><p>Explication</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><em>Develop</em></p></td>
+<td><p>Modification des formulaires</p></td>
+</tr>
+<tr class="row-odd"><td><p><em>Publish</em></p></td>
+<td><p>Publication des formulaires modifiés</p></td>
+</tr>
+<tr class="row-even"><td><p><em>Configure</em></p></td>
+<td><p>Configuration du projet et des centres (multi-centrique)</p></td>
+</tr>
+<tr class="row-odd"><td><p><em>Assign</em></p></td>
+<td><p>Modification des droits des utilisateurs sur le projet</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Droit</p></th>
+<th class="head"><p>Explication</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><em>Load</em></p></td>
+<td><p>Lecture des enregistrements</p></td>
+</tr>
+<tr class="row-odd"><td><p><em>Save</em></p></td>
+<td><p>Modification des enregistrements</p></td>
+</tr>
+<tr class="row-even"><td><p><em>Export</em></p></td>
+<td><p>CExport facile des données (CSV, XLSX, etc.)</p></td>
+</tr>
+<tr class="row-odd"><td><p><em>Batch</em></p></td>
+<td><p>Recalcul de toutes les variables calculées sur tous les enregistrements</p></td>
+</tr>
+<tr class="row-even"><td><p><em>Message</em></p></td>
+<td><p>Envoi de mails et SMS via les formulaires</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Par défaut l’authentification des utilisateurs repose sur un couple identifiant / mot de passe. Ce mot de passe est stocké hashé en base (libsodium pwhash).</p>
+<p>Plusieurs <strong>modes d’authentification forte</strong> sont disponibles ou prévus :</p>
+<ul class="simple">
+<li><p>Fichier clé supplémentaire stocké sur clé USB (ce mode présente l’avantage d’être compatible avec une utilisation chiffrée hors ligne)</p></li>
+<li><p>Support de tokens TOTP avec applications d’authentification (Authy, FreeOTP, Google Authenticator, etc.)</p></li>
+<li><p>Support de clés physiques avec Webauthn (Yubikey, etc.) <strong>[WIP]</strong></p></li>
+</ul>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="utilisation.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Utilisation de Goupile</div>
+              </div>
+              <svg><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="../user/routine.html">
+              <svg><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Utilisation en routine</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2022, Niels Martignène
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            <div class="icons">
+              
+            </div>
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            Contents
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Principes généraux</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#domaines-et-projets">Domaines et projets</a></li>
+<li><a class="reference internal" href="#gestion-des-utilisateurs">Gestion des utilisateurs</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/scripts/furo.js"></script>
+    </body>
+</html>

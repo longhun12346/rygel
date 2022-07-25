@@ -1,0 +1,412 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Utilisation en routine" href="routine.html" /><link rel="prev" title="Administration globale" href="administration.html" />
+
+    <meta name="generator" content="sphinx-5.0.1, furo 2022.06.04.1"/>
+        <title>Développement d’un projet - Goupile</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=40978830699223671f4072448e654b5958f38b89" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  --color-brand-primary: #FF6600;
+  --color-brand-content: #FF6600;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #FF6600;
+  --color-brand-content: #FF6600;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #FF6600;
+  --color-brand-content: #FF6600;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Goupile</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  
+  <span class="sidebar-brand-text">Goupile</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Présentation de Goupile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="administration.html">Administration globale</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Développement d’un projet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="routine.html">Utilisation en routine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arch/principes.html">Principes généraux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arch/utilisation.html">Utilisation de Goupile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arch/serveur.html">Architecture du serveur</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arch/installation.html">Installation de Goupile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arch/developpement.html">Développement de Goupile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arch/hds.html">Configuration serveur HDS</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="developpement-d-un-projet">
+<h1>Développement d’un projet<a class="headerlink" href="#developpement-d-un-projet" title="Permalink to this heading">#</a></h1>
+<p>Pour créer un eCRF, il faut se connecter sur l’interface administrateur, afficher le panneau de configuration « Projets » [1] puis cliquer sur le menu « Accès » du projet d’intérêt [2]. Vous pouvez mettre le lien ouvert en favoris pour accéder directement au projet par la suite.</p>
+<figure class="align-default" id="id1">
+<a class="bg-primary mb-1 reference internal image-reference" href="../_images/dev_access.webp"><img alt="Accès à un projet" class="bg-primary mb-1" src="../_images/dev_access.webp" style="width: 400px;" /></a>
+<figcaption>
+<p><span class="caption-text">Accéder à un projet depuis le panneau d’administration</span><a class="headerlink" href="#id1" title="Permalink to this image">#</a></p>
+</figcaption>
+</figure>
+<section id="vue-par-defaut">
+<h2>Vue par défaut<a class="headerlink" href="#vue-par-defaut" title="Permalink to this heading">#</a></h2>
+<p>Un nouvel onglet s’ouvre dans votre navigateur. Le bandeau noir en haut de page permet de configurer l’affichage de la page. Vous pouvez afficher (ou non) un ou deux panneaux en sélectionnant (ou déselectionnant) le(s) panneau(x) d’intérêt. Par défaut, le panneau « Liste » [2] est sélectionné. Les différents panneaux de configuration sont : « Code » [1], « Liste » [2] et « Saisie » [3]. Le menu déroulant central [4] vous permet de naviguer entre les différentes pages de votre eCRF (ici la première page se nomme « Introduction »). Le menu déroulant intermédiaire [5] vous permet de naviguer entre les différents sous-projets si votre projet a été subdivisé. Enfin le menu déroulant tout à droite [6] vous permet de changer votre mot de passe ou déconnecter votre session.</p>
+<figure class="align-default" id="id2">
+<a class="bg-primary mb-1 reference internal image-reference" href="../_images/dev_panels.webp"><img alt="Menu de Goupile" class="bg-primary mb-1" src="../_images/dev_panels.webp" style="width: 400px;" /></a>
+<figcaption>
+<p><span class="caption-text">Naviguer dans Goupile</span><a class="headerlink" href="#id2" title="Permalink to this image">#</a></p>
+</figcaption>
+</figure>
+<section id="code">
+<h3>Code<a class="headerlink" href="#code" title="Permalink to this heading">#</a></h3>
+<p>Le panneau de configuration « Code » vous permet d’éditer votre eCRF. Il contient deux onglets : « Application » et « Formulaire ». Par défaut, l’onglet « Formulaire » est affiché.</p>
+<p>L’onglet « Formulaire » vous permet l’édition du contenu de votre eCRF pour une page donnée (ici « Introduction ». Pour rappel la navigation entre les différentes pages de votre formulaire s’effectue via le menu déroulant [1]).
+Le contenu est édité en ligne de codes via un éditeur de script. Le langage de programmation est le JavaScript. La connaissance du langage n’est pas nécessaire pour la création et l’édition de scripts simples. L’édition de l’eCRF et les différents modules de code seront abordés plus en détails ultérieurement.</p>
+<figure class="align-default" id="id3">
+<a class="bg-primary mb-1 reference internal image-reference" href="../_images/dev_code1.webp"><img alt="Interface d'édition de formulaire" class="bg-primary mb-1" src="../_images/dev_code1.webp" style="width: 400px;" /></a>
+<figcaption>
+<p><span class="caption-text">Modifier le code d’un formulaire dans Goupile</span><a class="headerlink" href="#id3" title="Permalink to this image">#</a></p>
+</figcaption>
+</figure>
+<p>L’onglet « Application » vous permet d’éditer la structure générale de votre eCRF. Elle permet ainsi de définir les différentes pages et ensemble de pages. La structure est également éditée en ligne de code via un éditeur de script (également Javascript). L’édition de la structure de l’eCRF et les différents modules de code seront abordés plus en détail ultérieurement.</p>
+<figure class="align-default" id="id4">
+<a class="bg-primary mb-1 reference internal image-reference" href="../_images/dev_code2.webp"><img alt="Interface d'édition de l'application" class="bg-primary mb-1" src="../_images/dev_code2.webp" style="width: 400px;" /></a>
+<figcaption>
+<p><span class="caption-text">Modifier l’architecture de l’application dans Goupile</span><a class="headerlink" href="#id4" title="Permalink to this image">#</a></p>
+</figcaption>
+</figure>
+</section>
+<section id="liste">
+<h3>Liste<a class="headerlink" href="#liste" title="Permalink to this heading">#</a></h3>
+<p>Le panneau « Liste » vous permet d’ajouter des nouvelles observations (« Ajouter un suivi ») et de monitorer le recueil de données. La variable « ID » correspond à l’identifiant d’un formulaire de recueil. Il s’agit d’un numéro séquentiel par défaut mais cela peut être paramétré. Les variables « Introduction », « Avancé » et « Mise en page » correspondent aux trois pages de l’eCRF d’exemple.</p>
+<figure class="align-default" id="id5">
+<a class="bg-primary mb-1 reference internal image-reference" href="../_images/dev_list.webp"><img alt="Liste des saisies réalisées" class="bg-primary mb-1" src="../_images/dev_list.webp" style="width: 400px;" /></a>
+<figcaption>
+<p><span class="caption-text">Naviguer dans les dossiers saisis</span><a class="headerlink" href="#id5" title="Permalink to this image">#</a></p>
+</figcaption>
+</figure>
+</section>
+<section id="saisie">
+<h3>Saisie<a class="headerlink" href="#saisie" title="Permalink to this heading">#</a></h3>
+<p>Le panneau de configuration « Saisie » vous permet de réaliser le recueil d’une nouvelle observation (nouveau patient) ou de modifier une observation donnée (après sélection de l’observation dans le panneau de configuration « Liste »). La navigation entre les différentes pages de l’eCRF peut s’effectuer avec le menu déroulant [1] ou le menu de navigation [2]. Après avoir réalisé la saisie d’une observation, cliquer sur « Enregistrer » [3].</p>
+<figure class="align-default" id="id6">
+<a class="bg-primary mb-1 reference internal image-reference" href="../_images/dev_entry.webp"><img alt="Saisie de données dans Goupile" class="bg-primary mb-1" src="../_images/dev_entry.webp" style="width: 400px;" /></a>
+<figcaption>
+<p><span class="caption-text">Saisir des données sur un formulaire Goupile</span><a class="headerlink" href="#id6" title="Permalink to this image">#</a></p>
+</figcaption>
+</figure>
+</section>
+</section>
+<section id="widgets-standards">
+<h2>Widgets standards<a class="headerlink" href="#widgets-standards" title="Permalink to this heading">#</a></h2>
+<p>Les widgets sont créés en appelant des fonctions prédéfinies avec la syntaxe suivante :</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">span</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;color: #24579d;&quot;</span><span class="o">&gt;</span><span class="n">function</span><span class="o">&lt;/</span><span class="n">span</span><span class="o">&gt;</span> <span class="p">(</span> <span class="o">&lt;</span><span class="n">span</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;color: #c09500;&quot;</span><span class="o">&gt;</span><span class="s2">&quot;nom_variable&quot;</span><span class="o">&lt;/</span><span class="n">span</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">span</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;color: #842d3d;&quot;</span><span class="o">&gt;</span><span class="s2">&quot;Libellé présenté à l&#39;utilisateur&quot;</span><span class="o">&lt;/</span><span class="n">span</span><span class="o">&gt;</span> <span class="p">)</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+<span class="n">function</span> <span class="p">(</span> <span class="s2">&quot;nom_variable&quot;</span><span class="p">,</span> <span class="s2">&quot;Libellé présenté à l&#39;utilisateur&quot;</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p>Les noms de variables doivent commencer par une lettre ou _, suivie de zéro ou plusieurs caractères alphanumériques ou _. Ils ne doivent pas contenir d’espaces, de caractères accentués ou tout autre caractère spécial.</p>
+<figure class="align-default" id="id7">
+<a class="bg-primary mb-1 reference internal image-reference" href="../_images/instant.png"><img alt="Affiche instanté" class="bg-primary mb-1" src="../_images/instant.png" style="width: 300px;" /></a>
+<figcaption>
+<p><span class="caption-text">Exemples de widgets prédéfinis, avec le code à gauche et le résultat à droite</span><a class="headerlink" href="#id7" title="Permalink to this image">#</a></p>
+</figcaption>
+</figure>
+<p>La plupart des widgets acceptent des paramètres optionnels de cette manière :</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">span</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;color: #24579d;&quot;</span><span class="o">&gt;</span><span class="n">function</span><span class="o">&lt;/</span><span class="n">span</span><span class="o">&gt;</span> <span class="p">(</span> <span class="o">&lt;</span><span class="n">span</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;color: #c09500;&quot;</span><span class="o">&gt;</span><span class="s2">&quot;nom_variable&quot;</span><span class="o">&lt;/</span><span class="n">span</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">span</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;color: #842d3d;&quot;</span><span class="o">&gt;</span><span class="s2">&quot;Libellé présenté à l&#39;utilisateur&quot;</span><span class="o">&lt;/</span><span class="n">span</span><span class="o">&gt;</span><span class="p">,</span> <span class="p">{</span>
+    <span class="o">&lt;</span><span class="n">span</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;color: #054e2d;&quot;</span><span class="o">&gt;</span><span class="n">option1</span><span class="o">&lt;/</span><span class="n">span</span><span class="o">&gt;</span> <span class="p">:</span> <span class="o">&lt;</span><span class="n">span</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;color: #431180;&quot;</span><span class="o">&gt;</span><span class="n">valeur</span><span class="o">&lt;/</span><span class="n">span</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="o">&lt;</span><span class="n">span</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;color: #054e2d;&quot;</span><span class="o">&gt;</span><span class="n">option2</span><span class="o">&lt;/</span><span class="n">span</span><span class="o">&gt;</span> <span class="p">:</span> <span class="o">&lt;</span><span class="n">span</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;color: #431180;&quot;</span><span class="o">&gt;</span><span class="n">valeur</span><span class="o">&lt;/</span><span class="n">span</span><span class="o">&gt;</span>
+<span class="p">}</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p>Attention à la syntaxe du code. Lorsque les parenthèses ou les guillemets ne correspondent pas, une erreur se produit et la page affichée ne peut pas être mise à jour tant que l’erreur persiste. La section sur les erreurs contient plus d’informations à ce sujet.</p>
+<section id="saisie-d-information">
+<h3>Saisie d’information<a class="headerlink" href="#saisie-d-information" title="Permalink to this heading">#</a></h3>
+<p>XXX</p>
+</section>
+<section id="autres-widgets">
+<h3>Autres widgets<a class="headerlink" href="#autres-widgets" title="Permalink to this heading">#</a></h3>
+<p>XXX</p>
+</section>
+</section>
+<section id="erreurs-de-programmation">
+<h2>Erreurs de programmation<a class="headerlink" href="#erreurs-de-programmation" title="Permalink to this heading">#</a></h2>
+<p>Les langages de programmation (comme Javascript utilisé ici) sont très sensibles aux erreurs de syntaxe. Si vous faites une erreur, le code ne peut pas être exécuté et un message d’erreur sera affiché.</p>
+<figure class="align-default" id="id8">
+<a class="bg-primary mb-1 reference internal image-reference" href="../_images/error.png"><img alt="Erreur de code" class="bg-primary mb-1" src="../_images/error.png" style="width: 300px;" /></a>
+<figcaption>
+<p><span class="caption-text">Voyez-vous l’erreur ? Il y a une parenthèse fermante en trop à droite.</span><a class="headerlink" href="#id8" title="Permalink to this image">#</a></p>
+</figcaption>
+</figure>
+<p>Si cela se produit, ne paniquez pas ! La plupart des erreurs sont faciles à corriger. Si vous ne trouvez pas l’erreur, revenez en arrière à l’aide de Ctrl+Z.</p>
+</section>
+<section id="publication-du-formulaire">
+<h2>Publication du formulaire<a class="headerlink" href="#publication-du-formulaire" title="Permalink to this heading">#</a></h2>
+<p>Publiez votre formulaire simplement lorsqu’il est prêt.</p>
+<p>Une fois votre formulaire prêt, vous devez le publier pour le rendre accessible aux autres utilisateurs. Après publication, les utilisateurs pourront saisir des données sur ces formulaires.</p>
+<p>Pour ce faire, cliquez sur le bouton Publier en haut à droite du panneau d’édition de code. Ceci affichera le panneau de publication (visible dans la capture à gauche).</p>
+<figure class="align-default" id="id9">
+<a class="bg-primary mb-1 reference internal image-reference" href="../_images/publish.webp"><img alt="Publication d'un projet" class="bg-primary mb-1" src="../_images/publish.webp" style="width: 300px;" /></a>
+<figcaption>
+<p><span class="caption-text">Publier un projet rend les modifications disponibles à tout le monde</span><a class="headerlink" href="#id9" title="Permalink to this image">#</a></p>
+</figcaption>
+</figure>
+<p>Ce panneau récapitule les modifications apportées et les actions qu’engendrera la publication. Dans la capture à droite, on voit qu’une page a été modifiée localement (nommée « accueils ») et sera rendue publique après acceptation des modifications.</p>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="routine.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Utilisation en routine</div>
+              </div>
+              <svg><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="administration.html">
+              <svg><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Administration globale</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2022, Niels Martignène
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            <div class="icons">
+              
+            </div>
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            Contents
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Développement d’un projet</a><ul>
+<li><a class="reference internal" href="#vue-par-defaut">Vue par défaut</a><ul>
+<li><a class="reference internal" href="#code">Code</a></li>
+<li><a class="reference internal" href="#liste">Liste</a></li>
+<li><a class="reference internal" href="#saisie">Saisie</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#widgets-standards">Widgets standards</a><ul>
+<li><a class="reference internal" href="#saisie-d-information">Saisie d’information</a></li>
+<li><a class="reference internal" href="#autres-widgets">Autres widgets</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#erreurs-de-programmation">Erreurs de programmation</a></li>
+<li><a class="reference internal" href="#publication-du-formulaire">Publication du formulaire</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/scripts/furo.js"></script>
+    </body>
+</html>
