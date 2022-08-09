@@ -20,3 +20,8 @@ aside.footnote > p {
     margin: 0;
     margin-left: 1rem;
 }
+
+figcaption {
+    font-size: 0.9em;
+    font-style: italic;
+}

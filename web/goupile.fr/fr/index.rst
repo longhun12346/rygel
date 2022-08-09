@@ -19,12 +19,18 @@ Table of contents
 -----------------
 
 .. toctree::
-   :maxdepth: 2
+   :caption: Utilisation de Goupile
+   :hidden:
 
    user/introduction
    user/administration
    user/projet
    user/routine
+
+.. toctree::
+   :caption: Architecture de Goupile
+   :hidden:
+
    arch/principes
    arch/utilisation
    arch/serveur
