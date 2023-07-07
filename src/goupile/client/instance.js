@@ -663,7 +663,8 @@ function InstanceController() {
             await func({
                 app: app,
                 form: form,
-                values: form_state.data
+                values: form_state.data,
+                rule: (key, msg, cond, delayed) => { if (!cond) form.error(key, msg) }
             });
 
             addAutomaticActions(form, model);
@@ -919,7 +920,7 @@ function InstanceController() {
         buffer.sha256 = sha256;
 
         try {
-            func = await buildScript(buffer.code, ['app', 'form', 'values']);
+            func = await buildScript(buffer.code, ['app', 'form', 'values', 'rule']);
             code_builds.set(buffer.sha256, func);
         } catch (err) {
             error_entries.page.error(err, profile.develop ? -1 : log.defaultTimeout);
@@ -1309,7 +1310,7 @@ function InstanceController() {
 
             if (func == null) {
                 try {
-                    func = await buildScript(buffer.code, ['app', 'form', 'values']);
+                    func = await buildScript(buffer.code, ['app', 'form', 'values', 'rule']);
                     code_builds.set(buffer.sha256, func);
                 } catch (err) {
                     if (!profile.develop)
