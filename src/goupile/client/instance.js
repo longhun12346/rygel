@@ -172,6 +172,8 @@ function InstanceController() {
     this.runTasks = util.serialize(this.runTasks, mutex);
 
     function renderMenu() {
+        let show_history = (profile.lock == null && form_thread.anchor >= 0);
+
         let show_menu = (profile.lock == null && (route.menu.chain.length > 2 || route.menu.chain[0].children.length > 1));
         let show_title = !show_menu;
         let menu_is_wide = (show_menu && route.menu.chain[0].children.length > 3);
@@ -225,6 +227,14 @@ function InstanceController() {
                 ` : ''}
                 <div style="flex: 1; min-width: 4px;"></div>
 
+                ${show_history ? html`
+                    <button class="ins_hid">
+                        <span>
+                            ${app.stores[0].title} <span style="font-weight: bold;">#${form_thread.sequence}</span>
+                        </span>
+                    </button>
+                    <div style="width: 15px;"></div>
+                ` : ''}
                 ${show_menu && !menu_is_wide ? util.map(route.menu.chain[0].children, item => {
                     if (item.children.length) {
                         let active = route.menu.chain.includes(item);
@@ -1623,6 +1633,9 @@ function InstanceController() {
                 });
             });
         };
+
+        // XXX: Hack, move sequence to thread!
+        new_thread.sequence = findSequence(new_thread);
 
         form_thread = new_thread;
         form_entry = new_entry;
