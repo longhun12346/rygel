@@ -647,11 +647,11 @@ void HandleRecordSave(InstanceHolder *instance, const http_RequestInfo &request,
             }
 
             // Check permissions
-            if (base != anchor) {
+            /* if (base != anchor) {
                 LogError("Thread version mismatch");
                 io->AttachError(409);
                 return false;
-            }
+            } */
             if (anchor < 0) {
                 if (!stamp->HasPermission(UserPermission::DataNew)) {
                     LogError("You are not allowed to create new records");
