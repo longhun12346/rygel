@@ -44,11 +44,17 @@ async function build(code, get_file) {
         write: false,
         outfile: 'bundle.js',
         target: 'es6',
+        sourcemap: true,
         plugins: [plugin]
-    })
+    });
 
-    let bundle = ret.outputFiles[0].text;
-    return bundle;
+    let map = ret.outputFiles.find(out => out.path == '/bundle.js.map');
+    let bundle = ret.outputFiles.find(out => out.path == '/bundle.js');
+
+    let json = JSON.parse(map.text);
+    console.log(json);
+
+    return bundle.text;
 }
 
 export {
