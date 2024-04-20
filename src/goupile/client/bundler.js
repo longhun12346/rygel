@@ -12,6 +12,7 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 import * as esbuild from '../../../vendor/esbuild/wasm';
+import { SourceMapConsumer } from '../../../vendor/esbuild/wasm';
 
 async function init() {
     let url = `${ENV.urls.static}esbuild/esbuild.wasm`;
