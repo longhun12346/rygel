@@ -1813,9 +1813,11 @@ async function buildScript(code, variables) {
 
     variables = [...Object.keys(base), ...variables];
 
+    let build = null;
+
     if (typeof bundler != 'undefined') {
         try {
-            code = await bundler.build(code, async filename => {
+            build = await bundler.build(code, async filename => {
                 let file = await fetchCode(filename);
                 return file.code;
             });
@@ -1825,7 +1827,7 @@ async function buildScript(code, variables) {
     }
 
     try {
-        let func = new AsyncFunction(variables, code);
+        let func = new AsyncFunction(variables, build.code);
 
         return async api => {
             api = Object.assign({}, base, api);
@@ -1834,11 +1836,11 @@ async function buildScript(code, variables) {
                 let values = variables.map(key => api[key]);
                 await func(...values);
             } catch (err) {
-                throwRunError(err);
+                await throwRunError(err, build.map);
             }
         };
     } catch (err) {
-        throwRunError(err);
+        await throwRunError(err, build.map);
     }
 }
 
@@ -1849,8 +1851,9 @@ function throwParseError(err) {
     throw new Error(msg);
 }
 
-function throwRunError(err) {
-    let line = Util.parseEvalErrorLine(err);
+async function throwRunError(err, map) {
+    let pos = Util.parseEvalErrorPos(err);
+    let line = await bundler.resolve(map, pos.line, pos.column);
     let msg = `Erreur de script\n${line != null ? `Ligne ${line} : ` : ''}${err.message}`;
 
     throw new Error(msg);

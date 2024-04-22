@@ -12,11 +12,15 @@
 // along with this program. If not, see https://www.gnu.org/licenses/.
 
 import * as esbuild from '../../../vendor/esbuild/wasm';
-import { SourceMapConsumer } from '../../../vendor/esbuild/wasm';
+import { SourceMapConsumer } from '../../../vendor/source-map/source-map.js';
 
 async function init() {
     let url = `${ENV.urls.static}esbuild/esbuild.wasm`;
     await esbuild.initialize({ wasmURL: url });
+
+    await SourceMapConsumer.initialize({
+        "lib/mappings.wasm": "https://unpkg.com/source-map@0.7.3/lib/mappings.wasm",
+    });
 }
 
 async function build(code, get_file) {
@@ -52,12 +56,24 @@ async function build(code, get_file) {
     let bundle = ret.outputFiles.find(out => out.path == '/bundle.js');
 
     let json = JSON.parse(map.text);
-    console.log(json);
 
-    return bundle.text;
+    return {
+        code: bundle.text,
+        map: json
+    };
+}
+
+async function resolve(map, line, column) {
+    let pos = await SourceMapConsumer.with(map, null, async consumer => {
+        let pos = consumer.originalPositionFor({ line: line, column: column });
+        return pos;
+    });
+
+    return pos.line;
 }
 
 export {
     init,
-    build
+    build,
+    resolve
 }
