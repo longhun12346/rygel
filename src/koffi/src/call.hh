@@ -174,6 +174,6 @@ inline T *CallData::AllocHeap(Size size, Size align)
 
 void PerformAsyncRelay(napi_env env, napi_value callback, void *ctx, void *udata);
 
-void *GetTrampoline(int16_t idx, const FunctionInfo *proto);
+void *GetTrampoline(int16_t idx);
 
 }

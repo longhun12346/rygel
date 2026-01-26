@@ -25,8 +25,6 @@ extern "C" uint64_t ForwardCallXG(const void *func, uint8_t *sp, uint8_t **out_o
 extern "C" float ForwardCallXF(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 extern "C" double ForwardCallXD(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 
-#include "trampolines/prototypes.inc"
-
 bool AnalyseFunction(Napi::Env, InstanceData *, FunctionInfo *func)
 {
     func->ret.regular = IsRegularSize(func->ret.type->size, 8);
@@ -734,12 +732,6 @@ void CallData::Relay(Size idx, uint8_t *sp)
 #undef RETURN_INTEGER
 
     err_guard.Disable();
-}
-
-void *GetTrampoline(int16_t idx, const FunctionInfo *proto)
-{
-    bool xmm = proto->forward_fp || IsFloat(proto->ret.type);
-    return Trampolines[idx][xmm];
 }
 
 }

@@ -55,8 +55,6 @@ extern "C" Xmm0RaxRet ForwardCallXDG(const void *func, uint8_t *sp, uint8_t **ou
 extern "C" RaxXmm0Ret ForwardCallXGD(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 extern "C" Xmm0Xmm1Ret ForwardCallXDD(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 
-#include "trampolines/prototypes.inc"
-
 static inline RegisterClass MergeClasses(RegisterClass cls1, RegisterClass cls2)
 {
     if (cls1 == cls2)
@@ -927,12 +925,6 @@ void CallData::Relay(Size idx, uint8_t *sp)
 #undef RETURN_INTEGER
 
     err_guard.Disable();
-}
-
-void *GetTrampoline(int16_t idx, const FunctionInfo *proto)
-{
-    bool xmm = proto->forward_fp || IsFloat(proto->ret.type);
-    return Trampolines[idx][xmm];
 }
 
 }

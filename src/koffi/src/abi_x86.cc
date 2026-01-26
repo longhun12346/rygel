@@ -22,7 +22,7 @@ struct BackRegisters {
         double d;
         float f;
     } x87;
-    bool x87_double;
+    int ret_type;
     int ret_pop;
 };
 
@@ -39,8 +39,6 @@ extern "C" double ForwardCallD(const void *func, uint8_t *sp, uint8_t **out_old_
 extern "C" uint64_t ForwardCallRG(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 extern "C" float ForwardCallRF(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 extern "C" double ForwardCallRD(const void *func, uint8_t *sp, uint8_t **out_old_sp);
-
-#include "trampolines/prototypes.inc"
 
 bool AnalyseFunction(Napi::Env env, InstanceData *instance, FunctionInfo *func)
 {
@@ -500,7 +498,7 @@ void CallData::Relay(Size idx, uint8_t *sp)
     K_DEFER_N(err_guard) {
         int pop = out_reg->ret_pop;
         memset(out_reg, 0, K_SIZE(*out_reg));
-        out_reg->x87_double = true;
+        out_reg->ret_type = 0;
         out_reg->ret_pop = pop;
     };
 
@@ -709,6 +707,7 @@ void CallData::Relay(Size idx, uint8_t *sp)
              \
             CType v = GetNumber<CType>(value); \
             out_reg->eax = (uint32_t)v; \
+            out_reg->ret_type = 0; \
         } while (false)
 #define RETURN_INTEGER_32_SWAP(CType) \
         do { \
@@ -719,6 +718,7 @@ void CallData::Relay(Size idx, uint8_t *sp)
              \
             CType v = GetNumber<CType>(value); \
             out_reg->eax = (uint32_t)ReverseBytes(v); \
+            out_reg->ret_type = 0; \
         } while (false)
 #define RETURN_INTEGER_64(CType) \
         do { \
@@ -731,6 +731,7 @@ void CallData::Relay(Size idx, uint8_t *sp)
              \
             out_reg->eax = (uint32_t)((uint64_t)v >> 32); \
             out_reg->edx = (uint32_t)((uint64_t)v & 0xFFFFFFFFu); \
+            out_reg->ret_type = 0; \
         } while (false)
 #define RETURN_INTEGER_64_SWAP(CType) \
         do { \
@@ -743,10 +744,11 @@ void CallData::Relay(Size idx, uint8_t *sp)
              \
             out_reg->eax = (uint32_t)((uint64_t)v >> 32); \
             out_reg->edx = (uint32_t)((uint64_t)v & 0xFFFFFFFFu); \
+            out_reg->ret_type = 0; \
         } while (false)
 
     switch (type->primitive) {
-        case PrimitiveKind::Void: {} break;
+        case PrimitiveKind::Void: { out_reg->ret_type = 0; } break;
         case PrimitiveKind::Bool: {
             if (!value.IsBoolean()) [[unlikely]] {
                 ThrowError<Napi::TypeError>(env, "Unexpected %1 value, expected boolean", GetValueType(instance, value));
@@ -755,6 +757,7 @@ void CallData::Relay(Size idx, uint8_t *sp)
 
             bool b = value.As<Napi::Boolean>();
             out_reg->eax = (uint32_t)b;
+            out_reg->ret_type = 0;
         } break;
         case PrimitiveKind::Int8: { RETURN_INTEGER_32(int8_t); } break;
         case PrimitiveKind::UInt8: { RETURN_INTEGER_32(uint8_t); } break;
@@ -776,6 +779,7 @@ void CallData::Relay(Size idx, uint8_t *sp)
                 return;
 
             out_reg->eax = (uint32_t)str;
+            out_reg->ret_type = 0;
         } break;
         case PrimitiveKind::String16: {
             const char16_t *str16;
@@ -783,6 +787,7 @@ void CallData::Relay(Size idx, uint8_t *sp)
                 return;
 
             out_reg->eax = (uint32_t)str16;
+            out_reg->ret_type = 0;
         } break;
         case PrimitiveKind::String32: {
             const char32_t *str32;
@@ -790,6 +795,7 @@ void CallData::Relay(Size idx, uint8_t *sp)
                 return;
 
             out_reg->eax = (uint32_t)str32;
+            out_reg->ret_type = 0;
         } break;
         case PrimitiveKind::Pointer: {
             uint8_t *ptr;
@@ -812,6 +818,7 @@ void CallData::Relay(Size idx, uint8_t *sp)
             }
 
             out_reg->eax = (uint32_t)ptr;
+            out_reg->ret_type = 0;
         } break;
         case PrimitiveKind::Record:
         case PrimitiveKind::Union: {
@@ -829,6 +836,8 @@ void CallData::Relay(Size idx, uint8_t *sp)
             } else {
                 PushObject(obj, type, (uint8_t *)&out_reg->eax);
             }
+
+            out_reg->ret_type = 0;
         } break;
         case PrimitiveKind::Array: { K_UNREACHABLE(); } break;
         case PrimitiveKind::Float32: {
@@ -838,7 +847,7 @@ void CallData::Relay(Size idx, uint8_t *sp)
             }
 
             out_reg->x87.f = GetNumber<float>(value);
-            out_reg->x87_double = false;
+            out_reg->ret_type = 1;
         } break;
         case PrimitiveKind::Float64: {
             if (!value.IsNumber() && !value.IsBigInt()) [[unlikely]] {
@@ -847,7 +856,7 @@ void CallData::Relay(Size idx, uint8_t *sp)
             }
 
             out_reg->x87.d = GetNumber<double>(value);
-            out_reg->x87_double = true;
+            out_reg->ret_type = 2;
         } break;
         case PrimitiveKind::Callback: {
             void *ptr;
@@ -868,6 +877,7 @@ void CallData::Relay(Size idx, uint8_t *sp)
             }
 
             out_reg->eax = (uint32_t)ptr;
+            out_reg->ret_type = 0;
         } break;
 
         case PrimitiveKind::Prototype: { K_UNREACHABLE(); } break;
@@ -879,12 +889,6 @@ void CallData::Relay(Size idx, uint8_t *sp)
 #undef RETURN_INTEGER_32
 
     err_guard.Disable();
-}
-
-void *GetTrampoline(int16_t idx, const FunctionInfo *proto)
-{
-    bool x87 = IsFloat(proto->ret.type);
-    return Trampolines[idx][x87];
 }
 
 }

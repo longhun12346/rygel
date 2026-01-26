@@ -38,8 +38,6 @@ extern "C" uint64_t ForwardCallXGG(const void *func, uint8_t *sp, uint8_t **out_
 extern "C" float ForwardCallXF(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 extern "C" HfaRet ForwardCallXDDDD(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 
-#include "trampolines/prototypes.inc"
-
 static int IsHFA(const TypeInfo *type)
 {
 #if defined(__ARM_PCS_VFP)
@@ -1006,12 +1004,6 @@ void CallData::Relay(Size idx, uint8_t *sp)
 #undef RETURN_INTEGER_32
 
     err_guard.Disable();
-}
-
-void *GetTrampoline(int16_t idx, const FunctionInfo *proto)
-{
-    bool vec = proto->forward_fp || IsFloat(proto->ret.type);
-    return Trampolines[idx][vec];
 }
 
 }

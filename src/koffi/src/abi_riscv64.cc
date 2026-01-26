@@ -48,8 +48,6 @@ extern "C" Fa0A0Ret ForwardCallXDG(const void *func, uint8_t *sp, uint8_t **out_
 extern "C" A0Fa0Ret ForwardCallXGD(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 extern "C" Fa0Fa1Ret ForwardCallXDD(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 
-#include "trampolines/prototypes.inc"
-
 static inline void ExpandPair(const uint8_t raw[16], int size1, int size2, uint64_t out_regs[2])
 {
     memcpy(out_regs + 0, raw, size1);
@@ -903,12 +901,6 @@ void CallData::Relay(Size idx, uint8_t *sp)
 #undef RETURN_INTEGER
 
     err_guard.Disable();
-}
-
-void *GetTrampoline(int16_t idx, const FunctionInfo *proto)
-{
-    bool fp = proto->forward_fp || proto->ret.vec_count;
-    return Trampolines[idx][fp];
 }
 
 }
