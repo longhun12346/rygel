@@ -8,6 +8,7 @@ const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const tools = require('./tools.js');
+const TOOLCHAINS = require('../assets/toolchains.json');
 
 const DefaultOptions = {
     mode: 'RelWithDebInfo'
@@ -15,6 +16,8 @@ const DefaultOptions = {
 
 function Builder(config = {}) {
     let self = this;
+
+    let host = `${process.platform}_${tools.determine_arch()}`;
 
     let app_dir = config.app_dir;
     let project_dir = config.project_dir;
@@ -32,8 +35,7 @@ function Builder(config = {}) {
         package_dir = package_dir.replace(/\\/g, '/');
 
     let runtime_version = config.runtime_version;
-    let arch = config.arch;
-    let toolset = config.toolset || null;
+    let toolchain = config.toolchain || null;
     let prefer_clang = config.prefer_clang || false;
     let mode = config.mode || DefaultOptions.mode;
     let targets = config.targets || [];
@@ -44,8 +46,9 @@ function Builder(config = {}) {
         runtime_version = process.version;
     if (runtime_version.startsWith('v'))
         runtime_version = runtime_version.substr(1);
-    if (arch == null)
-        arch = tools.determine_arch();
+
+    if (toolchain != null && !Object.hasOwn(TOOLCHAINS, toolchain))
+        throw new Error(`Unknown cross-compilation toolchain '${toolchain}'`);
 
     let options = null;
 
@@ -64,7 +67,7 @@ function Builder(config = {}) {
         }
     }
     build_dir = build_dir.replace(/\\/g, '/');
-    work_dir = build_dir + `/v${runtime_version}_${arch}/${mode}`;
+    work_dir = build_dir + `/v${runtime_version}_${toolchain ?? 'native'}/${mode}`;
     output_dir = work_dir + '/Output';
 
     let cmake_bin = null;
@@ -78,7 +81,7 @@ function Builder(config = {}) {
         check_compatibility();
 
         console.log(`>> Node: ${runtime_version}`);
-        console.log(`>> Target: ${process.platform}_${arch}`);
+        console.log(`>> Toolchain: ${toolchain ?? 'native'}`);
 
         // Prepare build directory
         fs.mkdirSync(build_dir, { recursive: true, mode: 0o755 });
@@ -103,77 +106,46 @@ function Builder(config = {}) {
             args.push(`-DNODE_JS_INCLUDE_DIRS=${work_dir}/headers/include/node`);
         } else {
             console.log(`>> Using local node-api headers`);
-            args.push(`-DNODE_JS_INCLUDE_DIRS=${options.api}/include`);
+
+            let api_dir = expand_path(options.api, project_dir);
+            args.push(`-DNODE_JS_INCLUDE_DIRS=${api_dir}/include`);
         }
 
         args.push(`-DCMAKE_MODULE_PATH=${app_dir}/assets`);
 
-        let win32 = (process.platform == 'win32');
-        let msvc = (process.platform == 'win32' && process.env.MSYSTEM == null);
-        let darwin = (process.platform == 'darwin');
+        let win32 = (toolchain ?? host).startsWith('win32_');
+        let mingw = (process.platform == 'win32' && process.env.MSYSTEM != null);
 
         // Handle Node import library on Windows
         if (win32) {
-            if (msvc) {
+            if (mingw) {
+                args.push(`-DNODE_JS_LINK_LIB=node.dll`);
+            } else {
+                let info = TOOLCHAINS[toolchain ?? host];
+
                 if (options.api == null) {
-                    let dirname;
-                    switch (arch) {
-                        case 'ia32': { dirname = 'win-x86'; } break;
-                        case 'x64': { dirname = 'win-x64'; } break;
-                        case 'arm64': { dirname = 'win-arm64'; } break;
-
-                        default: {
-                            throw new Error(`Unsupported architecture '${arch}' for Node on Windows`);
-                        } break;
-                    }
-
-                    let destname = `${cache_dir}/node_v${runtime_version}_${arch}.lib`;
+                    let destname = `${cache_dir}/node_v${runtime_version}_${toolchain ?? host}.lib`;
 
                     if (!fs.existsSync(destname)) {
                         fs.mkdirSync(cache_dir, { recursive: true, mode: 0o755 });
 
-                        let url = `https://nodejs.org/dist/v${runtime_version}/${dirname}/node.lib`;
+                        let url = `https://nodejs.org/dist/v${runtime_version}/${info.lib}/node.lib`;
                         await tools.download_http(url, destname);
                     }
 
                     fs.copyFileSync(destname, work_dir + '/node.lib');
                     args.push(`-DNODE_JS_LINK_LIB=${work_dir}/node.lib`);
                 } else {
-                    args.push(`-DNODE_JS_LINK_DEF=${options.api}/def/node_api.def`);
+                    let api_dir = expand_path(options.api, project_dir);
+                    args.push(`-DNODE_JS_LINK_DEF=${api_dir}/def/node_api.def`);
                 }
-
-                switch (arch) {
-                    case 'ia32': {
-                        args.push('-DNODE_JS_LINK_FLAGS=/DELAYLOAD:node.exe;/SAFESEH:NO');
-                        args.push('-A', 'Win32');
-                    } break;
-                    case 'arm64': {
-                        args.push('-DNODE_JS_LINK_FLAGS=/DELAYLOAD:node.exe;/SAFESEH:NO');
-                        args.push('-A', 'ARM64');
-                    } break;
-                    case 'x64': {
-                        args.push('-DNODE_JS_LINK_FLAGS=/DELAYLOAD:node.exe');
-                        args.push('-A', 'x64');
-                    } break;
-                }
-
-                fs.copyFileSync(`${app_dir}/assets/win_delay_hook.c`, work_dir + '/win_delay_hook.c');
-                args.push(`-DNODE_JS_SOURCES=${work_dir}/win_delay_hook.c`);
-            } else {
-                args.push(`-DNODE_JS_LINK_LIB=node.dll`);
             }
+
+            fs.copyFileSync(`${app_dir}/assets/win_delay_hook.c`, work_dir + '/win_delay_hook.c');
+            args.push(`-DNODE_JS_SOURCES=${work_dir}/win_delay_hook.c`);
         }
 
-        if (darwin) {
-            args.push('-DNODE_JS_LINK_FLAGS=-undefined;dynamic_lookup');
-
-            switch (arch) {
-                case 'arm64': { args.push('-DCMAKE_OSX_ARCHITECTURES=arm64'); } break;
-                case 'x64': { args.push('-DCMAKE_OSX_ARCHITECTURES=x86_64'); } break;
-            }
-        }
-
-        if (!msvc) {
+        if (process.platform != 'win32' || mingw) {
             if (spawnSync('ninja', ['--version']).status === 0) {
                 args.push('-G', 'Ninja');
             } else if (process.platform == 'win32') {
@@ -186,16 +158,89 @@ function Builder(config = {}) {
                 args.push('-DCMAKE_CXX_COMPILER_LAUNCHER=ccache');
             }
         }
+
+        // Handle toolchain flags and cross-compilation
+        {
+            let info = TOOLCHAINS[toolchain ?? host];
+
+            if (info != null) {
+                if (Object.hasOwn(info, process.platform))
+                    info = Object.assign({}, info, info[process.platform]);
+
+                if (info.flags != null)
+                    args.push(...info.flags);
+            }
+
+            if (toolchain == null && process.arch == 'ia32') {
+                let proc = spawnSync('uname', ['-m']);
+                let machine = (proc.stdout ?? '').toString('utf-8').trim();
+
+                if (machine == 'x86_64') {
+                    // Compiler probably does not default to 32-bit... just force it
+                    args.push('-DCMAKE_ASM_FLAGS=-m32', '-DCMAKE_C_FLAGS=-m32', '-DCMAKE_CXX_FLAGS=-m32');
+                }
+            }
+
+            if (toolchain != null && info.triplet != null) {
+                let values = [
+                    ['CMAKE_SYSTEM_NAME', info.system],
+                    ['CMAKE_SYSTEM_PROCESSOR', info.processor]
+                ];
+                let sysroot = null;
+
+                // Switch to Clang automatically if the GCC cross-compiler does not exist
+                if (process.platform != 'win32' && !prefer_clang) {
+                    let binary = info.triplet + '-gcc';
+
+                    if (spawnSync(binary, ['-v']).status !== 0)
+                        prefer_clang = true;
+                }
+
+                if (prefer_clang) {
+                    values.push(['CMAKE_ASM_COMPILER_TARGET', info.triplet]);
+                    values.push(['CMAKE_C_COMPILER_TARGET', info.triplet]);
+                    values.push(['CMAKE_CXX_COMPILER_TARGET', info.triplet]);
+
+                    values.push(['CMAKE_EXE_LINKER_FLAGS', '-fuse-ld=lld']);
+                    values.push(['CMAKE_SHARED_LINKER_FLAGS', '-fuse-ld=lld']);
+                    values.push(['CMAKE_STATIC_LINKER_FLAGS', '-fuse-ld=lld']);
+                } else if (process.platform != 'win32') {
+                    values.push(['CMAKE_ASM_COMPILER', info.triplet + '-gcc']);
+                    values.push(['CMAKE_C_COMPILER', info.triplet + '-gcc']);
+                    values.push(['CMAKE_CXX_COMPILER', info.triplet + '-g++']);
+                }
+
+                if (info.sysroot != null) {
+                    sysroot = expand_path(info.sysroot, __dirname + '/..');
+                    if (!fs.existsSync(sysroot))
+                        throw new Error(`Cross-compilation sysroot '${sysroot}' does not exist`);
+
+                    values.push(['CMAKE_SYSROOT', sysroot]);
+                }
+
+                if (info.variables != null) {
+                    for (let key in info.variables) {
+                        let value = expand_string(info.variables[key], { sysroot: sysroot });
+                        values.push([key, value]);
+                    }
+                }
+
+                let filename = `${work_dir}/toolchain.cmake`;
+                let text = values.map(pair => `set(${pair[0]} "${pair[1]}")`).join('\n');
+
+                fs.writeFileSync(filename, text);
+                args.push(`-DCMAKE_TOOLCHAIN_FILE=${filename}`);
+            }
+        }
+
         if (prefer_clang) {
-            if (msvc) {
+            if (process.platform == 'win32' && !mingw) {
                 args.push('-T', 'ClangCL');
             } else {
                 args.push('-DCMAKE_C_COMPILER=clang');
                 args.push('-DCMAKE_CXX_COMPILER=clang++');
             }
         }
-        if (toolset != null)
-            args.push('-T', toolset);
 
         args.push(`-DCMAKE_BUILD_TYPE=${mode}`);
         for (let type of ['ARCHIVE', 'RUNTIME', 'LIBRARY']) {
@@ -424,22 +469,35 @@ function Builder(config = {}) {
         return options;
     }
 
-    function expand_path(str, root_dir) {
+    function expand_string(str, values = {}) {
         let expanded = str.replace(/{{ *([a-zA-Z_][a-zA-Z_0-9]*) *}}/g, (match, p1) => {
             switch (p1) {
                 case 'version': {
                     let options = read_cnoke_options();
                     return options.version || '';
                 } break;
-                case 'platform': return process.platform;
-                case 'arch': return arch;
 
-                default: return match;
+                case 'toolchain': return toolchain ?? host;
+
+                default: {
+                    if (Object.hasOwn(values, p1)) {
+                        return values[p1];
+                    } else {
+                        return match;
+                    }
+                } break;
             }
         });
 
+        return expanded;
+    }
+
+    function expand_path(str, root) {
+        let expanded = expand_string(str);
+
         if (!tools.path_is_absolute(expanded))
-            expanded = path.join(root_dir, expanded);
+            expanded = path.join(root, expanded);
+        expanded = path.normalize(expanded);
 
         return expanded;
     }
