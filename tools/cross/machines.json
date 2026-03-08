@@ -6,7 +6,6 @@
         "qemu": {
             "binary": "qemu-system-x86_64",
             "arguments": ["-m", "2G", "-smp", 2, "-kernel", "vmlinuz-5.10.0-12-686-pae", "-initrd", "initrd.img-5.10.0-12-686-pae", "-append", "root=/dev/sda1 apparmor=0", "-hda", "disk.qcow2", "-netdev", "user,id=mynet,hostfwd=tcp::22203-:22", "-device", "e1000,netdev=mynet", "-vnc", "127.0.0.1:13"],
-            "version": 3,
 
             "disk": "disk.qcow2",
 
@@ -27,7 +26,6 @@
         "qemu": {
             "binary": "qemu-system-x86_64",
             "arguments": ["-m", "2G", "-smp", 2, "-kernel", "vmlinuz-5.10.0-12-amd64", "-initrd", "initrd.img-5.10.0-12-amd64", "-append", "root=/dev/sda1 apparmor=0", "-hda", "disk.qcow2", "-netdev", "user,id=mynet,hostfwd=tcp::22204-:22", "-device", "e1000,netdev=mynet", "-vnc", "127.0.0.1:14"],
-            "version": 5,
 
             "disk": "disk.qcow2",
 
@@ -48,7 +46,6 @@
         "qemu": {
             "binary": "qemu-system-arm",
             "arguments": ["-M", "virt", "-cpu", "cortex-a15", "-m", "1G", "-kernel", "vmlinuz-5.10.0-12-armmp-lpae", "-initrd", "initrd.img-5.10.0-12-armmp-lpae", "-append", "root=/dev/vda2 apparmor=0", "-drive", "if=none,file=disk.qcow2,format=qcow2,id=hd", "-device", "virtio-blk-device,drive=hd", "-netdev", "user,id=mynet,hostfwd=tcp::22201-:22", "-device", "virtio-net-device,netdev=mynet", "-vnc", "127.0.0.1:11"],
-            "version": 4,
 
             "disk": "disk.qcow2",
 
@@ -69,7 +66,6 @@
         "qemu": {
             "binary": "qemu-system-aarch64",
             "arguments": ["-M", "virt", "-cpu", "cortex-a53", "-m", "2G", "-smp", 2, "-kernel", "vmlinuz-5.10.0-12-arm64", "-initrd", "initrd.img-5.10.0-12-arm64", "-append", "root=/dev/vda2 apparmor=0", "-drive", "if=none,file=disk.qcow2,format=qcow2,id=hd", "-device", "virtio-blk-device,drive=hd", "-netdev", "user,id=mynet,hostfwd=tcp::22202-:22", "-device", "virtio-net-device,netdev=mynet", "-vnc", "127.0.0.1:12"],
-            "version": 4,
 
             "disk": "disk.qcow2",
 
@@ -90,7 +86,6 @@
         "qemu": {
             "binary": "qemu-system-riscv64",
             "arguments": ["-machine", "virt", "-cpu", "rv64", "-m", "2G", "-smp", 2, "-device", "virtio-blk-device,drive=hd", "-drive", "file=disk.qcow2,if=none,id=hd", "-netdev", "user,id=mynet,hostfwd=tcp::22214-:22", "-device", "virtio-net-device,netdev=mynet", "-bios", "fw_jump.elf", "-kernel", "uboot.elf", "-append", "root=LABEL=rootfs console=ttyS0", "-vnc", "127.0.0.1:24"],
-            "version": 1,
 
             "disk": "disk.qcow2",
 
@@ -300,7 +295,6 @@
         "qemu": {
             "binary": "qemu-system-loong64",
             "arguments": ["-m", "2G", "-smp", 2, "-bios", "QEMU_EFI.fd", "-kernel", "vmlinuz-6.12.32-loong64", "-initrd", "initrd.img-6.12.32-loong64", "-append", "root=/dev/vda2 console=ttyS0", "-drive", "file=disk.qcow2", "-netdev", "user,id=mynet,hostfwd=tcp::22215-:22", "-device", "e1000,netdev=mynet", "-vnc", "127.0.0.1:25"],
-            "version": 1,
 
             "disk": "disk.qcow2",
 
