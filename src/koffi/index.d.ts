@@ -145,13 +145,13 @@ export function introspect(type: TypeSpec): TypeInfo;
 export function alias(name: string, type: TypeSpec): IKoffiCType;
 
 type KoffiConfig = {
-    sync_stack_size: number
-    sync_heap_size: number
-    async_stack_size: number
-    async_heap_size: number
-    resident_async_pools: number
-    max_async_calls: number
-    max_type_size: number
+    sync_stack_size?: number
+    sync_heap_size?: number
+    async_stack_size?: number
+    async_heap_size?: number
+    resident_async_pools?: number
+    max_async_calls?: number
+    max_type_size?: number
 };
 type KoffiStats = {
     disposed: number
