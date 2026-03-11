@@ -2343,6 +2343,11 @@ bool InitAsyncBroker(Napi::Env env, InstanceData *instance)
             return false;
         }
         napi_unref_threadsafe_function(env, instance->broker);
+
+        napi_add_env_cleanup_hook(env, [](void *udata) {
+            napi_threadsafe_function broker = (napi_threadsafe_function)udata;
+            napi_release_threadsafe_function(broker, napi_tsfn_abort);
+        }, instance->broker);
     }
 
     return true;
@@ -2626,10 +2631,6 @@ InstanceData::~InstanceData()
                 trampoline->recv.Reset();
             }
         }
-    }
-
-    if (broker) {
-        napi_release_threadsafe_function(broker, napi_tsfn_abort);
     }
 }
 
