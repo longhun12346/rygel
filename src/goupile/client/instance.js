@@ -2280,7 +2280,7 @@ async function runPage(page, thread, state) {
         cache: form_cache,
         form: builder,
         page: page,
-        meta: new MetaInterface(app, page, thread, meta),
+        meta: new MetaInterface(app, page, thread, meta, state, model),
         thread: thread,
         values: state.values
     });

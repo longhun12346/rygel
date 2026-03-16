@@ -13,11 +13,15 @@ function MetaModel() {
     this.signup = null;
 }
 
-function MetaInterface(app, page, thread, meta) {
+function MetaInterface(app, page, thread, meta, state, model) {
     Object.defineProperties(this, {
         hid: { get: () => meta.hid, set: hid => { meta.hid = hid; }, enumerable: true },
         summary: { get: () => meta.summary, set: summary => { meta.summary = summary; }, enumerable: true }
     });
+
+    this.trigger = function() {
+        state.triggerErrors(model);
+    };
 
     this.constrain = function(key, types) {
         if (!key)
