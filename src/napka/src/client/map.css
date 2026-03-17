@@ -486,6 +486,7 @@ dialog {
     z-index: 9999;
     left: 0;
     top: 0;
+    box-sizing: border-box;
     width: 100%;
     height: 100%;
     display: flex;
@@ -493,6 +494,7 @@ dialog {
     justify-content: center;
     background: #ffffffcc;
     backdrop-filter: blur(4px);
+    border: none;
 
     & > form {
         background-color: white;
