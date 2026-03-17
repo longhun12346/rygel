@@ -58,7 +58,7 @@
             #news > div p.title {
                 font-size: 1.1em;
                 font-weight: bold;
-                margin-bottom: 1.4em;
+                margin-bottom: 1em;
             }
             #news > div a {
                 color: white;
