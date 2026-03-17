@@ -5,7 +5,7 @@ require_once(__DIR__ . "/util.php");
 function open_database() {
     $db = new SQLite3(__DIR__ . "/../data/news.db", SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE);
 
-    $schema = 3;
+    $schema = 4;
     $version = $db->querySingle("PRAGMA user_version");
 
     try {
@@ -94,6 +94,13 @@ function open_database() {
                         SELECT id, png, title, content, date, duration FROM news_BAK;
 
                     DROP TABLE news_BAK;
+                ");
+            } // fallthrough
+
+            case 3: {
+                $db->exec("
+                    ALTER TABLE news RENAME COLUMN png TO webp;
+                    UPDATE news SET webp = NULL;
                 ");
             } // fallthrough
         }

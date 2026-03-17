@@ -98,11 +98,11 @@ function renderNews() {
                             ${news.map(item => {
                                 let image = null;
 
-                                if (typeof item.png == 'string') {
-                                    if (item.png.match(/^[a-z0-9]{64}$/)) {
-                                        image = `/data/${item.png}.png`;
+                                if (typeof item.webp == 'string') {
+                                    if (item.webp.match(/^[a-z0-9]{64}$/)) {
+                                        image = `/data/${item.webp}.webp`;
                                     } else {
-                                        image = 'data:image/png;base64,' + item.png;
+                                        image = 'data:image/webp;base64,' + item.webp;
                                     }
                                 }
 
@@ -112,7 +112,7 @@ function renderNews() {
                                             ${image != null ? html`<img src=${image} height="32" alt=""/><br/>` : ''}
                                             <div>
                                                 <button type="button" class="small" @click=${e => updateImage(item)}>Modifier</button>
-                                                ${item.png != null ? html`<button type="button" class="small"  @click=${e => { item.png = null; run(); }}><img src="static/delete.webp" alt="Supprimer" /></button>` : ''}
+                                                ${item.webp != null ? html`<button type="button" class="small"  @click=${e => { item.webp = null; run(); }}><img src="static/delete.webp" alt="Supprimer" /></button>` : ''}
                                             </div>
                                         </td>
                                         <td><input class="title" type="text" value=${item.title}
@@ -142,7 +142,7 @@ function renderNews() {
 
 function addNews(e) {
     let item = {
-        png: null,
+        webp: null,
         title: '',
         content: ''
     };
@@ -158,13 +158,45 @@ function deleteNews(item) {
 
 async function updateImage(item) {
     let file = await Util.loadFile();
+    let src = await loadImage(file);
 
-    let buf = await file.arrayBuffer();
+    let height = 640;
+    let width = Math.round(src.width / src.height * height);
+    let img = await resizeImage(src, width, height);
+
+    let buf = await img.arrayBuffer();
     let base64 = Base64.toBase64(buf);
 
-    item.png = base64;
+    item.webp = base64;
 
     run();
+}
+
+async function loadImage(file) {
+    let url = URL.createObjectURL(file);
+
+    let img = new Promise((resolve, reject) => {
+        let img = new Image;
+
+        img.addEventListener('load', () => resolve(img));
+        img.addEventListener('error', e => reject(new Error('Failed to load image')));
+
+        img.src = url;
+    });
+
+    return img;
+}
+
+async function resizeImage(img, width, height) {
+    let canvas = new OffscreenCanvas(width, height);
+    let ctx = canvas.getContext('2d');
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, width, height);
+
+    let blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.95 });
+    return blob;
 }
 
 async function resetNews() {

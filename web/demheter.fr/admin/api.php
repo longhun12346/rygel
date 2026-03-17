@@ -39,25 +39,25 @@ switch ($method) {
             $changeset = random_uuid4();
 
             foreach ($data["news"] as $item) {
-                $stmt = $db->prepare("INSERT INTO news (id, png, title, content, changeset)
-                                      VALUES (:id, :png, :title, :content, :changeset)
-                                      ON CONFLICT(id) DO UPDATE SET png = excluded.png,
+                $stmt = $db->prepare("INSERT INTO news (id, webp, title, content, changeset)
+                                      VALUES (:id, :webp, :title, :content, :changeset)
+                                      ON CONFLICT(id) DO UPDATE SET webp = excluded.webp,
                                                                     title = excluded.title,
                                                                     content = excluded.content,
                                                                     changeset = excluded.changeset");
                 if (isset($item["id"]))
                     $stmt->bindValue(":id", $item["id"]);
-                if (is_string($item["png"]) && !preg_match("/^[a-z0-9]{64}$/", $item["png"])) {
-                    $png = base64_decode($item["png"]);
+                if (is_string($item["webp"]) && !preg_match("/^[a-z0-9]{64}$/", $item["webp"])) {
+                    $webp = base64_decode($item["webp"]);
 
-                    $sha256 = hash("sha256", $item["png"]);
-                    $filename = __DIR__ . '/../data/' . $sha256 . '.png';
+                    $sha256 = hash("sha256", $item["webp"]);
+                    $filename = __DIR__ . '/../data/' . $sha256 . '.webp';
 
-                    file_put_contents($filename, $png);
+                    file_put_contents($filename, $webp);
 
-                    $stmt->bindValue(":png", $sha256);
+                    $stmt->bindValue(":webp", $sha256);
                 } else {
-                    $stmt->bindValue(":png", $item["png"]);
+                    $stmt->bindValue(":webp", $item["webp"]);
                 }
                 $stmt->bindValue(":title", $item["title"]);
                 $stmt->bindValue(":content", $item["content"]);
@@ -72,7 +72,7 @@ switch ($method) {
             $db->query("COMMIT");
         }
 
-        $res = $db->query("SELECT id, png, title, content FROM news ORDER BY id");
+        $res = $db->query("SELECT id, webp, title, content FROM news ORDER BY id");
         $news = fetch_all($res);
 
         echo json_encode($news, JSON_UNESCAPED_UNICODE);

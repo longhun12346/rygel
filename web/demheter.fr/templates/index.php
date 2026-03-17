@@ -118,7 +118,7 @@ if (file_exists(__DIR__ . "/data/news.db")) {
 
     $db = open_database();
 
-    $res = $db->query("SELECT png, title, content FROM news ORDER BY id DESC");
+    $res = $db->query("SELECT webp, title, content FROM news ORDER BY id DESC");
     $news = fetch_all($res);
 } else {
     $news = [];
@@ -135,7 +135,7 @@ if (count($news)) {
     foreach ($news as $i => $item) {
         $cls = $i ? "" : "active";
 
-        $image = $item["png"] ? "/data/{$item["png"]}.png" : "";
+        $image = $item["webp"] ? "/data/{$item["webp"]}.webp" : "";
         $title = htmlspecialchars($item["title"]);
         $content = parse_markdown($item["content"]);
 
