@@ -284,6 +284,18 @@ Size CallData::PushString32Value(Napi::Value value, const char32_t **out_str32)
     return j;
 }
 
+static inline Napi::Value GetMemberValue(Napi::Env env, Napi::Object obj, const RecordMember &member)
+{
+    if (member.key) {
+        napi_value key = nullptr;
+        napi_get_reference_value(env, member.key, &key);
+
+        return obj.Get(key);
+    } else {
+        return obj.Get(member.name);
+    }
+}
+
 bool CallData::PushObject(Napi::Object obj, const TypeInfo *type, uint8_t *origin)
 {
     K_ASSERT(IsObject(obj));
@@ -365,7 +377,7 @@ bool CallData::PushObject(Napi::Object obj, const TypeInfo *type, uint8_t *origi
 
     for (Size i = 0; i < members.len; i++) {
         const RecordMember &member = members[i];
-        Napi::Value value = obj.Get(member.name);
+        Napi::Value value = GetMemberValue(env, obj, member);
 
         if (member.countedby >= 0) {
             const char *countedby = members[member.countedby].name;
@@ -780,7 +792,10 @@ bool CallData::PushPointer(Napi::Value value, const TypeInfo *type, int directio
         Napi::External<ValueCast> external = value.As<Napi::External<ValueCast>>();
         ValueCast *cast = external.Data();
 
-        value = cast->ref.Value();
+        napi_value referenced;
+        napi_get_reference_value(value.Env(), cast->ref, &referenced);
+
+        value = Napi::Value(env, referenced);
         type = cast->type;
     }
 
@@ -930,7 +945,10 @@ bool CallData::PushCallback(Napi::Value value, const TypeInfo *type, void **out_
         Napi::External<ValueCast> external = value.As<Napi::External<ValueCast>>();
         ValueCast *cast = external.Data();
 
-        value = cast->ref.Value();
+        napi_value referenced;
+        napi_get_reference_value(value.Env(), cast->ref, &referenced);
+
+        value = Napi::Value(env, referenced);
         type = cast->type;
     }
 

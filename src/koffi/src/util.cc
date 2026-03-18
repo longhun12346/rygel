@@ -755,6 +755,18 @@ static uint32_t DecodeDynamicLength(const uint8_t *origin, const RecordMember &b
     K_UNREACHABLE();
 }
 
+static inline void SetMemberValue(Napi::Env env, Napi::Object obj, const RecordMember &member, Napi::Value value)
+{
+    if (member.key) {
+        napi_value key = nullptr;
+        napi_get_reference_value(env, member.key, &key);
+
+        obj.Set(key, value);
+    } else {
+        obj.Set(member.name, value);
+    }
+}
+
 void DecodeObject(Napi::Object obj, const uint8_t *origin, const TypeInfo *type)
 {
     Napi::Env env = obj.Env();
@@ -769,67 +781,67 @@ void DecodeObject(Napi::Object obj, const uint8_t *origin, const TypeInfo *type)
 
             case PrimitiveKind::Bool: {
                 bool b = *(bool *)src;
-                obj.Set(member.name, Napi::Boolean::New(env, b));
+                SetMemberValue(env, obj, member, Napi::Boolean::New(env, b));
             } break;
             case PrimitiveKind::Int8: {
                 int8_t i = *(int8_t *)src;
-                obj.Set(member.name, NewInt(env, i));
+                SetMemberValue(env, obj, member, NewInt(env, i));
             } break;
             case PrimitiveKind::UInt8: {
                 uint8_t i = *(uint8_t *)src;
-                obj.Set(member.name, NewInt(env, i));
+                SetMemberValue(env, obj, member, NewInt(env, i));
             } break;
             case PrimitiveKind::Int16: {
                 int16_t i = *(int16_t *)src;
-                obj.Set(member.name, NewInt(env, i));
+                SetMemberValue(env, obj, member, NewInt(env, i));
             } break;
             case PrimitiveKind::Int16S: {
                 int16_t i = *(int16_t *)src;
-                obj.Set(member.name, NewInt(env, ReverseBytes(i)));
+                SetMemberValue(env, obj, member, NewInt(env, ReverseBytes(i)));
             } break;
             case PrimitiveKind::UInt16: {
                 uint16_t i = *(uint16_t *)src;
-                obj.Set(member.name, NewInt(env, i));
+                SetMemberValue(env, obj, member, NewInt(env, i));
             } break;
             case PrimitiveKind::UInt16S: {
                 uint16_t i = *(uint16_t *)src;
-                obj.Set(member.name, NewInt(env, ReverseBytes(i)));
+                SetMemberValue(env, obj, member, NewInt(env, ReverseBytes(i)));
             } break;
             case PrimitiveKind::Int32: {
                 int32_t i = *(int32_t *)src;
-                obj.Set(member.name, NewInt(env, i));
+                SetMemberValue(env, obj, member, NewInt(env, i));
             } break;
             case PrimitiveKind::Int32S: {
                 int32_t i = *(int32_t *)src;
-                obj.Set(member.name, NewInt(env, ReverseBytes(i)));
+                SetMemberValue(env, obj, member, NewInt(env, ReverseBytes(i)));
             } break;
             case PrimitiveKind::UInt32: {
                 uint32_t i = *(uint32_t *)src;
-                obj.Set(member.name, NewInt(env, i));
+                SetMemberValue(env, obj, member, NewInt(env, i));
             } break;
             case PrimitiveKind::UInt32S: {
                 uint32_t i = *(uint32_t *)src;
-                obj.Set(member.name, NewInt(env, ReverseBytes(i)));
+                SetMemberValue(env, obj, member, NewInt(env, ReverseBytes(i)));
             } break;
             case PrimitiveKind::Int64: {
                 int64_t v = *(int64_t *)src;
-                obj.Set(member.name, NewInt(env, v));
+                SetMemberValue(env, obj, member, NewInt(env, v));
             } break;
             case PrimitiveKind::Int64S: {
                 int64_t v = ReverseBytes(*(int64_t *)src);
-                obj.Set(member.name, NewInt(env, v));
+                SetMemberValue(env, obj, member, NewInt(env, v));
             } break;
             case PrimitiveKind::UInt64: {
                 uint64_t v = *(uint64_t *)src;
-                obj.Set(member.name, NewInt(env, v));
+                SetMemberValue(env, obj, member, NewInt(env, v));
             } break;
             case PrimitiveKind::UInt64S: {
                 uint64_t v = ReverseBytes(*(uint64_t *)src);
-                obj.Set(member.name, NewInt(env, v));
+                SetMemberValue(env, obj, member, NewInt(env, v));
             } break;
             case PrimitiveKind::String: {
                 const char *str = *(const char **)src;
-                obj.Set(member.name, str ? Napi::String::New(env, str) : env.Null());
+                SetMemberValue(env, obj, member, str ? Napi::String::New(env, str) : env.Null());
 
                 if (member.type->dispose) {
                     member.type->dispose(env, member.type, str);
@@ -837,7 +849,7 @@ void DecodeObject(Napi::Object obj, const uint8_t *origin, const TypeInfo *type)
             } break;
             case PrimitiveKind::String16: {
                 const char16_t *str16 = *(const char16_t **)src;
-                obj.Set(member.name, str16 ? Napi::String::New(env, str16) : env.Null());
+                SetMemberValue(env, obj, member, str16 ? Napi::String::New(env, str16) : env.Null());
 
                 if (member.type->dispose) {
                     member.type->dispose(env, member.type, str16);
@@ -845,7 +857,7 @@ void DecodeObject(Napi::Object obj, const uint8_t *origin, const TypeInfo *type)
             } break;
             case PrimitiveKind::String32: {
                 const char32_t *str32 = *(const char32_t **)src;
-                obj.Set(member.name, str32 ? MakeStringFromUTF32(env, str32) : env.Null());
+                SetMemberValue(env, obj, member, str32 ? MakeStringFromUTF32(env, str32) : env.Null());
             } break;
             case PrimitiveKind::Pointer: {
                 void *ptr2 = *(void **)src;
@@ -855,10 +867,10 @@ void DecodeObject(Napi::Object obj, const uint8_t *origin, const TypeInfo *type)
                     uint32_t len = DecodeDynamicLength(origin, by);
 
                     Napi::Value value = DecodeArray(env, (const uint8_t *)ptr2, member.type, len);
-                    obj.Set(member.name, value);
+                    SetMemberValue(env, obj, member, value);
                 } else {
                     Napi::Value p = ptr2 ? WrapPointer(env, member.type->ref.type, ptr2) : env.Null();
-                    obj.Set(member.name, p);
+                    SetMemberValue(env, obj, member, p);
                 }
 
                 if (member.type->dispose) {
@@ -869,7 +881,7 @@ void DecodeObject(Napi::Object obj, const uint8_t *origin, const TypeInfo *type)
                 void *ptr2 = *(void **)src;
 
                 Napi::Value p = ptr2 ? WrapCallback(env, member.type->ref.type, ptr2) : env.Null();
-                obj.Set(member.name, p);
+                SetMemberValue(env, obj, member, p);
 
                 if (member.type->dispose) {
                     member.type->dispose(env, member.type, ptr2);
@@ -878,7 +890,7 @@ void DecodeObject(Napi::Object obj, const uint8_t *origin, const TypeInfo *type)
             case PrimitiveKind::Record:
             case PrimitiveKind::Union: {
                 Napi::Object obj2 = DecodeObject(env, src, member.type);
-                obj.Set(member.name, obj2);
+                SetMemberValue(env, obj, member, obj2);
             } break;
             case PrimitiveKind::Array: {
                 if (member.countedby >= 0) {
@@ -891,23 +903,23 @@ void DecodeObject(Napi::Object obj, const uint8_t *origin, const TypeInfo *type)
                     len = std::min(len, max);
 
                     Napi::Value value = DecodeArray(env, src, member.type, len);
-                    obj.Set(member.name, value);
+                    SetMemberValue(env, obj, member, value);
                 } else {
                     Napi::Value value = DecodeArray(env, src, member.type);
-                    obj.Set(member.name, value);
+                    SetMemberValue(env, obj, member, value);
                 }
             } break;
             case PrimitiveKind::Float32: {
                 float f;
                 memcpy(&f, src, 4);
 
-                obj.Set(member.name, Napi::Number::New(env, (double)f));
+                SetMemberValue(env, obj, member, Napi::Number::New(env, (double)f));
             } break;
             case PrimitiveKind::Float64: {
                 double d;
                 memcpy(&d, src, 8);
 
-                obj.Set(member.name, Napi::Number::New(env, d));
+                SetMemberValue(env, obj, member, Napi::Number::New(env, d));
             } break;
 
             case PrimitiveKind::Prototype: { K_UNREACHABLE(); } break;

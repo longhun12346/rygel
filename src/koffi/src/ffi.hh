@@ -86,6 +86,7 @@ struct TypeInfo {
 
 struct RecordMember {
     const char *name;
+    napi_ref key;
     const TypeInfo *type;
     int32_t offset;
     Size countedby;
@@ -203,8 +204,11 @@ struct ReturnInfo {
 };
 
 struct ValueCast {
-    Napi::Reference<Napi::Value> ref;
+    napi_env env;
+    napi_ref ref;
     const TypeInfo *type;
+
+    ~ValueCast();
 };
 
 // Also used for callbacks, even though many members are not used in this case

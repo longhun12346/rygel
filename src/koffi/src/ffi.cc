@@ -32,12 +32,17 @@
 #include <wchar.h>
 
 #include <napi.h>
+#include <uv.h>
 
 namespace K {
 
 SharedData shared;
 
 static thread_local CallData *exec_call;
+
+// Recent N-API functions are loaded dynamically
+static napi_status NAPI_CDECL (*node_api_create_property_key_utf8)(napi_env env, const char* str, size_t length, napi_value* result);
+static napi_status NAPI_CDECL (*node_api_post_finalizer)(node_api_basic_env env, napi_finalize finalize_cb, void* finalize_data, void* finalize_hint);
 
 static bool ChangeSize(const char *name, Napi::Value value, Size min_size, Size max_size, Size *out_size)
 {
@@ -231,6 +236,29 @@ static bool MapType(Napi::Env env, InstanceData *instance, const TypeInfo *type,
     return true;
 }
 
+static bool FinalizeCompositeType(Napi::Env env, TypeInfo *type, Size size)
+{
+    if (node_api_create_property_key_utf8) {
+        for (RecordMember &member: type->members) {
+            napi_value key = nullptr;
+            node_api_create_property_key_utf8(env, member.name, NAPI_AUTO_LENGTH, &key);
+
+            napi_create_reference(env, key, 1, &member.key);
+        }
+    }
+
+    size = AlignLen(size, type->align);
+    if (!size) {
+        ThrowError<Napi::Error>(env, "Empty type '%1' is not allowed in C", type->name);
+        return false;
+    }
+    type->size = (int32_t)size;
+
+    type->flags &= ~(int)TypeFlag::IsIncomplete;
+
+    return true;
+}
+
 static Napi::Value CreateStructType(const Napi::CallbackInfo &info, bool pad)
 {
     Napi::Env env = info.Env();
@@ -398,14 +426,8 @@ static Napi::Value CreateStructType(const Napi::CallbackInfo &info, bool pad)
         }
     }
 
-    size = AlignLen(size, type->align);
-    if (!size) {
-        ThrowError<Napi::Error>(env, "Empty struct '%1' is not allowed in C", type->name);
+    if (!FinalizeCompositeType(env, type, size))
         return env.Null();
-    }
-    type->size = (int32_t)size;
-
-    type->flags &= ~(int)TypeFlag::IsIncomplete;
     err_guard.Disable();
 
     if (replace) {
@@ -563,14 +585,8 @@ static Napi::Value CreateUnionType(const Napi::CallbackInfo &info)
         type->members.Append(member);
     }
 
-    size = (int32_t)AlignLen(size, type->align);
-    if (!size) {
-        ThrowError<Napi::Error>(env, "Empty union '%1' is not allowed in C", type->name);
+    if (!FinalizeCompositeType(env, type, size))
         return env.Null();
-    }
-    type->size = (int32_t)size;
-
-    type->flags &= ~(int)TypeFlag::IsIncomplete;
     err_guard.Disable();
 
     // Union constructor
@@ -2064,9 +2080,10 @@ static Napi::Value CastValue(const Napi::CallbackInfo &info)
         return env.Null();
     }
 
-    ValueCast *cast = new ValueCast;
+    ValueCast *cast = new ValueCast();
 
-    cast->ref.Reset(value, 1);
+    cast->env = env;
+    napi_create_reference(env, value, 1, &cast->ref);
     cast->type = type;
 
     Napi::External<ValueCast> external = Napi::External<ValueCast>::New(env, cast, [](Napi::Env, ValueCast *cast) { delete cast; });
@@ -2290,6 +2307,18 @@ void LibraryHolder::Unref() const
     }
 }
 
+ValueCast::~ValueCast()
+{
+    if (node_api_post_finalizer) {
+        node_api_post_finalizer(env, [](napi_env env, void *data, void *) {
+            napi_ref ref = (napi_ref)data;
+            napi_delete_reference(env, ref);
+        }, (void *)ref, nullptr);
+    } else {
+        napi_delete_reference(env, ref);
+    }
+}
+
 FunctionInfo::~FunctionInfo()
 {
     if (lib) {
@@ -2446,6 +2475,26 @@ static InstanceData *CreateInstance()
 
 static Napi::Object InitModule(Napi::Env env, Napi::Object exports)
 {
+    // Load recent N-API functions (version >= 9) functions dynamically
+    {
+        static std::once_flag flag;
+
+        std::call_once(flag, [&]() {
+            uv_lib_t lib = {};
+
+            uv_dlopen(nullptr, &lib);
+            K_DEFER { uv_dlclose(&lib); };
+
+            if (Napi::VersionManagement::GetNapiVersion(env) >= 10) {
+                // We can't use optimized property keys in older versions because we need to create
+                // references to them, but napi_create_reference() was not usable with primitive values.
+                uv_dlsym(&lib, "node_api_create_property_key_utf8", (void **)&node_api_create_property_key_utf8);
+            }
+
+            uv_dlsym(&lib, "node_api_post_finalizer", (void **)&node_api_post_finalizer);
+        });
+    }
+
     InstanceData *instance = CreateInstance();
     K_CRITICAL(instance, "Failed to initialize Koffi");
 
