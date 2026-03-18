@@ -1,6 +1,6 @@
 {
     "linux_armhf": {
-        "title": "Linux ARM32",
+        "title": "Linux/glibc ARM32",
 
         "info": {
             "arch": "armhf",
@@ -26,7 +26,7 @@
     },
 
     "linux_arm64": {
-        "title": "Linux ARM64",
+        "title": "Linux/glibc ARM64",
 
         "info": {
             "arch": "arm64",
@@ -52,7 +52,7 @@
     },
 
     "linux_ia32": {
-        "title": "Linux i386",
+        "title": "Linux/glibc i386",
 
         "info": {
             "arch": "ia32",
@@ -78,7 +78,7 @@
     },
 
     "linux_x64": {
-        "title": "Linux x64",
+        "title": "Linux/glibc x64",
 
         "info": {
             "arch": "x64",
@@ -104,7 +104,7 @@
     },
 
     "linux_riscv64d": {
-        "title": "Linux RISCV-64",
+        "title": "Linux/glibc RISCV-64",
 
         "info": {
             "platform": "linux",
@@ -367,7 +367,7 @@
     },
 
     "musl_x64": {
-        "title": "Linux (musl) x64",
+        "title": "Linux/musl x64",
 
         "info": {
             "arch": "x64",
@@ -392,7 +392,7 @@
     },
 
     "linux_loong64": {
-        "title": "Linux LoongArch64",
+        "title": "Linux/glibc LoongArch64",
 
         "info": {
             "arch": "loong64",
@@ -418,7 +418,7 @@
     },
 
     "musl_arm64": {
-        "title": "Linux (musl) ARM64",
+        "title": "Linux/musl ARM64",
 
         "info": {
             "arch": "arm64",
