@@ -2482,8 +2482,12 @@ static Napi::Object InitModule(Napi::Env env, Napi::Object exports)
         std::call_once(flag, [&]() {
             uv_lib_t lib = {};
 
+#if defined(_WIN32)
+            lib.handle = GetModuleHandle(nullptr);
+#else
             uv_dlopen(nullptr, &lib);
             K_DEFER { uv_dlclose(&lib); };
+#endif
 
             if (Napi::VersionManagement::GetNapiVersion(env) >= 10) {
                 // We can't use optimized property keys in older versions because we need to create
