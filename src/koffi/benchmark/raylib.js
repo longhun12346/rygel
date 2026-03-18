@@ -5,7 +5,6 @@
 const pkg = require('./package.json');
 const r = require('raylib');
 const koffi = require('../../koffi');
-const ctypes = require('node-ctypes');
 const ref = require('@napi-ffi/ref-napi');
 const ffi = require('@napi-ffi/ffi-napi');
 const struct = require('@napi-ffi/ref-struct-di')(ref);
