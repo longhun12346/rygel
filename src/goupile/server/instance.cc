@@ -17,7 +17,7 @@ namespace K {
 
 // If you change InstanceVersion, don't forget to update the migration switch!
 const int InstanceVersion = 147;
-const int LegacyVersion = 61;
+const int LegacyVersion = 62;
 
 // Process-wide unique instance identifier
 static std::atomic_int64_t next_unique { 0 };
@@ -1921,6 +1921,15 @@ bool MigrateInstance(sq_Database *db, int target)
             } [[fallthrough]];
 
             case 61: {
+                bool success = db->RunMany(R"(
+                    INSERT INTO fs_settings (key, value) VALUES ('FrameAncestor', NULL);
+                    INSERT INTO fs_settings (key, value) VALUES ('AllowStyle', 0);
+                )");
+                if (!success)
+                    return false;
+            } [[fallthrough]];
+
+            case 62: {
                 if (target == LegacyVersion)
                     break;
             } [[fallthrough]];
