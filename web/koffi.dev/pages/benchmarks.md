@@ -54,8 +54,8 @@ This benchmark uses the CPU-based image drawing functions in Raylib. The calls a
 
 raylib        | Iteration time | Relative performance | Overhead
 ------------- | -------------- | -------------------- | --------
-cc            | 10.8 µs        | x1.14                | -12%
-napi          | 12.3 µs        | x1.00                | +0%
+C++           | 10.8 µs        | x1.14                | -12%
+node-raylib   | 12.3 µs        | x1.00                | +0%
 koffi         | 13.2 µs        | x0.92                | +8%
 node-ffi-napi | 80.3 µs        | x0.15                | +555%
 
@@ -102,8 +102,8 @@ This benchmark uses the CPU-based image drawing functions in Raylib. The calls a
 
 raylib        | Iteration time | Relative performance | Overhead
 ------------- | -------------- | -------------------- | --------
-cc            | 18.2 µs        | x1.50                | -33%
-napi          | 27.3 µs        | x1.00                | (ref)
+C++           | 18.2 µs        | x1.50                | -33%
+node-raylib   | 27.3 µs        | x1.00                | (ref)
 koffi         | 29.8 µs        | x0.92                | +9%
 node-ffi-napi | 96.3 µs        | x0.28                | +253%
 
