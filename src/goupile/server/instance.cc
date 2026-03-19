@@ -3149,12 +3149,14 @@ bool MigrateInstance(sq_Database *db, int target)
             } [[fallthrough]];
 
             case 145: {
-                if (!db->Run("INSERT INTO fs_settings (key, value) VALUES ('FrameAncestor', NULL)"))
+                if (!db->Run(R"(INSERT INTO fs_settings (key, value) VALUES ('FrameAncestor', NULL)
+                                ON CONFLICT DO NOTHING)"))
                     return false;
             } [[fallthrough]];
 
             case 146: {
-                if (!db->Run("INSERT INTO fs_settings (key, value) VALUES ('AllowStyle', 0)"))
+                if (!db->Run(R"(INSERT INTO fs_settings (key, value) VALUES ('AllowStyle', 0)
+                                ON CONFLICT DO NOTHING)"))
                     return false;
             } // [[fallthrough]];
 
