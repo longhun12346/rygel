@@ -994,7 +994,8 @@ function defaultFormPage(ctx) {
                 let cls = 'ins_level';
 
                 if (!status.enabled) {
-                    cls += ' disabled';
+                    if (!profile.develop)
+                        cls += ' disabled';
                     text = T.not_available;
                 } else if (status.complete) {
                     cls += ' complete';
@@ -1030,7 +1031,8 @@ function defaultFormPage(ctx) {
                 let text = null;
 
                 if (!status.enabled) {
-                    cls += ' disabled';
+                    if (!profile.develop)
+                        cls += ' disabled';
                     text = T.not_available;
                 } else if (status.complete) {
                     cls += ' complete';
