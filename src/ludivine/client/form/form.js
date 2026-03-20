@@ -166,8 +166,14 @@ function FormModule(app, study, page) {
             let prev_part = model.parts[rendered_idx];
             let new_intro = (part.intro_idx !== prev_part?.intro_idx);
 
-            let el = div.querySelector(new_intro ? '#intro' : '#part');
-            el?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+            let target = div.querySelector(new_intro ? '#intro' : '#part');
+
+            if (target != null) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
 
             rendered_idx = part_idx;
         }
