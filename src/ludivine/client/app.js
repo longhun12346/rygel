@@ -904,7 +904,17 @@ async function runProfile() {
                 <div class="column">
                     <div class="box">
                         <div class="header">Bienvenue sur ${ENV.title} !</div>
-                        ${!session.password ? html`
+                        <p>Utilisez le bouton à gauche pour <b>personnaliser votre avatar</b>, si vous le désirez.
+                        Une fois prêt(e), accéder à votre <b>tableau de bord et aux études</b> à l'aide du bouton ci-dessous.
+
+                        <div class="actions">
+                            <a href="/participer">Accéder aux études</a>
+                        </div>
+                    </div>
+
+                    ${!session.password ? html`
+                        <div class="box">
+                            <div class="header">Créez un mot de passe</div>
                             <div class="help">
                                 <img src=${ASSETS['pictures/help1']} alt="" />
                                 <div>
@@ -915,14 +925,8 @@ async function runProfile() {
                                     </div>
                                 </div>
                             </div>
-                        ` : ''}
-                        <p>Utilisez le bouton à gauche pour <b>personnaliser votre avatar</b>, si vous le désirez.
-                        Une fois prêt(e), accéder à votre <b>tableau de bord et aux études</b> à l'aide du bouton ci-dessous.
-
-                        <div class="actions">
-                            <a href="/participer">Accéder aux études</a>
                         </div>
-                    </div>
+                    ` : ''}
 
                     <div class="box">
                         <div class="header">
