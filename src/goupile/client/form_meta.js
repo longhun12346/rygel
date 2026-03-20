@@ -19,7 +19,7 @@ function MetaInterface(app, page, thread, meta, state, model) {
         summary: { get: () => meta.summary, set: summary => { meta.summary = summary; }, enumerable: true }
     });
 
-    this.trigger = function() {
+    this.check = function() {
         state.triggerErrors(model);
     };
 
