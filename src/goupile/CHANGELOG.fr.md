@@ -2,6 +2,16 @@
 
 ## Goupile 3.12
 
+### Goupile 3.12.2
+
+*Sortie le 20/03/2026*
+
+* Ajout de `meta.check()` pour déclencher les erreurs depuis un script utilisateur.
+* Prévention de la réaffectation des variables globales de Goupile (comme `T`).
+* Compilation des scripts utilisateur en mode strict.
+* Déblocage des tuiles de pages non activées en mode conception.
+* Correction des paramètres CSP qui ne fonctionnaient pas dans les projets v2.
+
 ### Goupile 3.12.1
 
 *Sortie le 09/03/2026*

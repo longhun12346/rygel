@@ -2,6 +2,16 @@
 
 ## Goupile 3.12
 
+### Goupile 3.12.2
+
+*Released on 2026-03-20*
+
+- Add `meta.check()` to trigger errors from user scripts.
+- Prevent reassignment of global Goupile variables (such as `T`).
+- Compile user scripts in strict JS mode.
+- Allow form developers to click disabled page tiles.
+- Fix new CSP settings not working in legacy orojects.
+
 ### Goupile 3.12.1
 
 *Released on 2026-03-09*
