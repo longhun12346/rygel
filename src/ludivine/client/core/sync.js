@@ -5,7 +5,7 @@ import { Util, Log, Net } from 'lib/web/base/base.js';
 import { Hex } from 'lib/web/base/mixer.js';
 import * as sqlite3 from 'lib/web/sqlite/sqlite3.js';
 
-const DATABASE_VERSION = 6;
+const DATABASE_VERSION = 7;
 
 let uploads = 0;
 
@@ -217,6 +217,16 @@ async function openVault(ref, key, lock) {
 
                     DROP TABLE studies_BAK;
                     DROP TABLE tests_BAK;
+                `);
+            } // fallthrough
+
+            case 6: {
+                await t.exec(`
+                    CREATE TABLE downloads (
+                        filename TEXT NOT NULL,
+                        timestamp INTEGER NOT NULL 
+                    );
+                    CREATE UNIQUE INDEX downloads_f ON downloads (filename);
                 `);
             } // fallthrough
         }

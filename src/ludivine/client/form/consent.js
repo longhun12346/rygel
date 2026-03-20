@@ -22,14 +22,20 @@ function ConsentModule(app, project) {
     let state = null;
     let values = null;
 
-    this.run = function() {
+    this.run = async function() {
         if (state != null)
             return;
 
         div = document.createElement('div');
         div.className = 'column';
 
-        downloaded = (consent.download == null);
+        if (consent.download != null) {
+            let row = await db.fetch1('SELECT timestamp FROM downloads WHERE filename = ?', consent.download);
+            downloaded = (row != null);
+        } else {
+            downloaded = true;
+        }
+
         state = new FormState;
         values = state.values;
 
@@ -87,9 +93,17 @@ function ConsentModule(app, project) {
         `, div);
     }
 
-    function toggleDownload() {
+    async function toggleDownload(e) {
         if (downloaded)
             return;
+
+        e.preventDefault();
+
+        let timestamp = (new Date).valueOf();
+        await db.exec(`INSERT INTO downloads (filename, timestamp) VALUES (?, ?)
+                       ON CONFLICT DO NOTHING`, consent.download, timestamp);
+
+        e.target.click();
 
         setTimeout(() => {
             downloaded = true;
