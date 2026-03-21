@@ -2,6 +2,12 @@
 
 ## Goupile 3.12
 
+### Goupile 3.12.4
+
+*Released on 2026-03-21*
+
+- Rebuild with SQLite3mc 2.3.2 (SQLite 3.51.3) after SQLite 3.52 has been withdrawn.
+
 ### Goupile 3.12.3
 
 *Released on 2026-03-21*

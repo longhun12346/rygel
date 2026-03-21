@@ -2,6 +2,12 @@
 
 ## Goupile 3.12
 
+### Goupile 3.12.4
+
+*Sortie le 21/03/2026*
+
+- Recompilation avec SQLite3mc 2.3.2 (SQLite 3.51.3) après le retrait de SQLite 3.52.
+
 ### Goupile 3.12.3
 
 *Sortie le 21/03/2026*
