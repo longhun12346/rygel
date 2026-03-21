@@ -6,18 +6,18 @@
 
 *Sortie le 21/03/2026*
 
-* L'action de verrouillage est cachée si les données sont en cours de modification.
-* L'action de verrouillage automatique est cachée sauf si l’utilisateur a la permission *DataAudit*.
+- L'action de verrouillage est cachée si les données sont en cours de modification.
+- L'action de verrouillage automatique est cachée sauf si l’utilisateur a la permission *DataAudit*.
 
 ### Goupile 3.12.2
 
 *Sortie le 20/03/2026*
 
-* Ajout de `meta.check()` pour déclencher les erreurs depuis un script utilisateur.
-* Prévention de la réaffectation des variables globales de Goupile (comme `T`).
-* Compilation des scripts utilisateur en mode strict.
-* Déblocage des tuiles de pages non activées en mode conception.
-* Correction des paramètres CSP qui ne fonctionnaient pas dans les projets v2.
+- Ajout de `meta.check()` pour déclencher les erreurs depuis un script utilisateur.
+- Prévention de la réaffectation des variables globales de Goupile (comme `T`).
+- Compilation des scripts utilisateur en mode strict.
+- Déblocage des tuiles de pages non activées en mode conception.
+- Correction des paramètres CSP qui ne fonctionnaient pas dans les projets v2.
 
 ### Goupile 3.12.1
 
