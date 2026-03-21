@@ -1077,7 +1077,7 @@ function addAutomaticActions(builder, model) {
                        (form_state.hasChanged() || next != null);
         let can_confirm = edit && !form_state.hasChanged() &&
                           form_entry.tags.includes('draft');
-        let can_lock = form_thread.saved &&
+        let can_lock = form_thread.saved && !form_state.hasChanged() &&
                        ((route.page.lock === false && !form_thread.locked) ||
                         (route.page.lock != null && goupile.hasPermission('data_audit')));
 
