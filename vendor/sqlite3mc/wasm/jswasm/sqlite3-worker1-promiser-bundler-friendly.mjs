@@ -18,9 +18,10 @@
   slightly simpler client-side interface than the slightly-lower-level
   Worker API does.
 
-  In non-ESM builds this file necessarily exposes one global symbol,
-  but clients may freely `delete` that symbol after calling it.
+  This script necessarily exposes one global symbol, but clients may
+  freely `delete` that symbol after calling it.
 */
+'use strict';
 
 globalThis.sqlite3Worker1Promiser = function callee(config = callee.defaultConfig){
   
@@ -130,7 +131,7 @@ globalThis.sqlite3Worker1Promiser.defaultConfig = {
     });
   }
   ,
-  onerror: (...args)=>console.error('sqlite3Worker1Promiser():',...args)
+  onerror: (...args)=>console.error('worker1 promiser error',...args)
 };
 
 
@@ -173,4 +174,3 @@ globalThis.sqlite3Worker1Promiser.v2.defaultConfig =
 
 
 export default sqlite3Worker1Promiser.v2;
-delete globalThis.sqlite3Worker1Promiser;
