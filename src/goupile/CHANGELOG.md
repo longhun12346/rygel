@@ -2,6 +2,13 @@
 
 ## Goupile 3.12
 
+### Goupile 3.12.3
+
+*Released on 2026-03-21*
+
+- Hide lock action if data is being modified.
+- Hide automatic lock action unless user has *DataAudit* permission.
+
 ### Goupile 3.12.2
 
 *Released on 2026-03-20*

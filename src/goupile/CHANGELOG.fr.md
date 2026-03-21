@@ -2,6 +2,13 @@
 
 ## Goupile 3.12
 
+### Goupile 3.12.3
+
+*Sortie le 21/03/2026*
+
+* L'action de verrouillage est cachée si les données sont en cours de modification.
+* L'action de verrouillage automatique est cachée sauf si l’utilisateur a la permission *DataAudit*.
+
 ### Goupile 3.12.2
 
 *Sortie le 20/03/2026*
