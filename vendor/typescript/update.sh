@@ -14,4 +14,4 @@ dos2unix node_modules/typescript/*
 
 rm -rf package*.json
 rm -rf node_modules/.bin
-rm -f node_modules/.*
+rm -f node_modules/.package-lock.json
