@@ -27,11 +27,31 @@
 #include "util.hh"
 #ifdef _WIN32
     #include "win32.hh"
+    #ifndef NOMINMAX
+        #define NOMINMAX
+    #endif
+    #ifndef WIN32_LEAN_AND_MEAN
+        #define WIN32_LEAN_AND_MEAN
+    #endif
+    #include <windows.h>
 #endif
 
 #include <napi.h>
 
 namespace RG {
+
+#ifdef _WIN32
+extern "C" EXCEPTION_DISPOSITION __cdecl SehHandler(
+    EXCEPTION_RECORD *rec, void *, CONTEXT *ctx, void *)
+{
+    if (!(rec->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND))) {
+        EXCEPTION_POINTERS ep = { rec, ctx };
+        UnhandledExceptionFilter(&ep);
+        ExitProcess(rec->ExceptionCode);
+    }
+    return ExceptionContinueSearch;
+}
+#endif
 
 struct BackRegisters {
     uint32_t eax;
@@ -133,6 +153,16 @@ bool CallData::Prepare(const FunctionInfo *func, const Napi::CallbackInfo &info)
 {
     uint32_t *args_ptr = nullptr;
     uint32_t *fast_ptr = nullptr;
+
+#ifdef _WIN32
+    // Reserve space for SEH frame (EXCEPTION_REGISTRATION_RECORD) on Koffi stack,
+    // above the arguments. This allows UnhandledExceptionFilter to work correctly
+    // when the native function crashes.
+    uint32_t *seh_ptr = nullptr;
+    if (!AllocStack(8, 4, &seh_ptr)) [[unlikely]]
+        return false;
+    seh_record = (uint8_t *)seh_ptr;
+#endif
 
     // Pass return value in register or through memory
     if (!AllocStack(func->args_size, 16, &args_ptr)) [[unlikely]]
@@ -343,7 +373,20 @@ void CallData::Execute(const FunctionInfo *func, void *native)
     };
 
     // Adjust stack limits so SEH works correctly
-    teb->ExceptionList = (void *)-1; // EXCEPTION_CHAIN_END
+    {
+        // Install a valid SEH frame on the Koffi stack so that
+        // UnhandledExceptionFilter can be called when a crash occurs.
+        struct EXCEPTION_REGISTRATION_RECORD {
+            void *Next;
+            void *Handler;
+        };
+
+        auto *rec = (EXCEPTION_REGISTRATION_RECORD *)seh_record;
+        rec->Next = (void *)-1; // EXCEPTION_CHAIN_END
+        rec->Handler = (void *)SehHandler;
+
+        teb->ExceptionList = rec;
+    }
     teb->StackBase = mem->stack0.end();
     teb->StackLimit = mem->stack0.ptr;
     teb->DeallocationStack = mem->stack0.ptr;

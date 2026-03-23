@@ -63,6 +63,9 @@ class alignas(8) CallData {
 
     uint8_t *new_sp;
     uint8_t *old_sp;
+#if defined(_WIN32) && (defined(__i386__) || defined(_M_IX86))
+    uint8_t *seh_record;
+#endif
 
     union {
         int8_t i8;
