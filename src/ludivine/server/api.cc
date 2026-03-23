@@ -12,151 +12,6 @@
 
 namespace K {
 
-static const smtp_MailContent NewUser = {
-    "Connexion à {{ TITLE }} !",
-
-    R"(Bienvenue !
-
-Nous vous remercions de votre intérêt pour les recherches de {{ TITLE }}.
-
-Attention, ce mail est important ! Il est l’unique moyen de connexion à votre espace personnel durant toute la durée des études.
-
-Conservez-le précieusement, ou même mieux, enregistrez la pièce jointe sur votre ordinateur/téléphone/tablette. Celle-ci contient les informations nécessaires pour récupérer votre compte si vous perdez ce mail.
-
-Nous vous invitons à utiliser le lien suivant afin de commencer votre aventure {{ TITLE }} :
-
-{{ LOGIN }}
-
-Nous utilisons un système de chiffrement end-to-end pour assurer la sécurité et l’anonymat de vos données. Nous ne serons donc pas en mesure de vous renvoyer un nouveau lien de connexion en cas de perte de celui-ci.
-
-Nous vous sommes très reconnaissants de votre implication dans la recherche sur les psychotraumatismes.
-
-L’équipe de {{ TITLE }}
-{{ CONTACT }})",
-
-    R"(<html lang="fr"><body>
-<p>Bienvenue !</p>
-<p>Nous vous remercions de votre intérêt pour les recherches de {{ TITLE }}.</p>
-<p><b>Attention, ce <b>mail est important</b> ! Il est l’unique moyen de connexion à votre espace personnel durant toute la durée des études.</b></p>
-<p><b>Conservez-le précieusement, ou même mieux, enregistrez la pièce jointe sur votre ordinateur/téléphone/tablette. Celle-ci contient les informations nécessaires pour récupérer votre compte si vous perdez ce mail.</b></p>
-<p>Nous vous invitons à cliquer sur le lien suivant afin de commencer votre aventure {{ TITLE }}.</p>
-<div align="center"><br>
-    <a style="padding: 0.7em 2em; background: #2d8261; border-radius: 30px;
-              font-weight: bold; text-decoration: none !important; color: white; text-transform: uppercase; text-wrap: nowrap;" href="{{ LOGIN }}">Connexion à {{ TITLE }}</a>
-<br><br></div>
-<p>Vous pouvez également utiliser ce QR code pour vous connecter à l'aide de votre smartphone si vous le souhaitez :</p>
-<div align="center"><br>
-    <img src="cid:qrcode.png" alt="">
-<br><br></div>
-<p>Nous utilisons un système de chiffrement end-to-end pour assurer la sécurité et l’anonymat de vos données. Nous ne serons donc <b>pas en mesure de vous renvoyer un nouveau lien de connexion</b> en cas de perte de celui-ci.</p>
-<p>Nous vous sommes très reconnaissants de votre implication dans la recherche sur les psychotraumatismes.</p>
-<p><i>L’équipe de {{ TITLE }}</i><br>
-<a href="mailto:{{ CONTACT }}">{{ CONTACT }}</a></p>
-</body></html>)",
-
-    {}
-};
-
-static const smtp_MailContent ExistingNoPassword = {
-    "Nouvelle connexion à {{ TITLE }}",
-    R"(Bonjour,
-
-Un compte {{ TITLE }} existe déjà avec cette adresse email.
-
-Pour vous reconnecter, nous vous invitons à utiliser le lien de connexion initial reçu par mail lors de la création de votre compte. Vous l'avez peut-être même enregistré sur votre ordinateur/téléphone/tablette.
-
-Pour rappel, nous utilisons un système de chiffrement complexe pour assurer la sécurité et l'anonymat de vos données. Nous ne sommes donc pas en mesure de vous renvoyer un nouveau lien de connexion en cas de perte de celui-ci.
-
-Si vous rencontrez un problème, vous pouvez contacter l'équipe de {{ TITLE }} : {{ CONTACT }}
-
-Nous vous sommes très reconnaissants de votre implication dans la recherche sur les psychotraumatismes.
-
-L'équipe de {{ TITLE }}
-{{ CONTACT }})",
-    R"(<html lang="fr"><body>
-<p>Bonjour,</p>
-<p>Un compte {{ TITLE }} existe déjà avec cette adresse email.</p>
-<p><b>Pour vous reconnecter, nous vous invitons à utiliser le lien de connexion initial reçu par mail lors de la création de votre compte. Vous l’avez peut-être même enregistré sur votre ordinateur/téléphone/tablette.</b></p>
-<p>Pour rappel, nous utilisons un système de chiffrement complexe pour assurer la sécurité et l’anonymat de vos données. Nous ne sommes donc pas en mesure de vous renvoyer un nouveau lien de connexion en cas de perte de celui-ci.
-<p>Si vous rencontrez un problème, vous pouvez contacter l’équipe de {{ TITLE }} : <a href="mailto:{{ CONTACT }}">{{ CONTACT }}</a></p>
-<p>Nous vous sommes très reconnaissants de votre implication dans la recherche sur les psychotraumatismes.</p>
-<p><i>L’équipe de {{ TITLE }}</i><br>
-<a href="mailto:{{ CONTACT }}">{{ CONTACT }}</a></p>
-</body></html>)",
-    {}
-};
-
-static const smtp_MailContent ExistingWithPassword = {
-    "Nouvelle connexion à {{ TITLE }}",
-    R"(Bonjour,
-
-Un compte {{ TITLE }} existe déjà avec cette adresse email.
-
-Pour vous reconnecter, nous vous invitons à utiliser le lien de connexion initial reçu par mail lors de la création de votre compte. Vous l'avez peut-être même enregistré sur votre ordinateur/téléphone/tablette.
-
-Si vous aviez défini un mot de passe, vous pouvez également utiliser ce lien :
-
-{{ LOGIN }}
-
-Pour rappel, nous utilisons un système de chiffrement complexe pour assurer la sécurité et l'anonymat de vos données. Nous ne sommes donc pas en mesure de vous renvoyer un nouveau lien de connexion en cas de perte de celui-ci.
-
-Si vous rencontrez un problème, vous pouvez contacter l'équipe de {{ TITLE }} : {{ CONTACT }}
-
-Nous vous sommes très reconnaissants de votre implication dans la recherche sur les psychotraumatismes.
-
-L'équipe de {{ TITLE }}
-{{ CONTACT }})",
-    R"(<html lang="fr"><body>
-<p>Bonjour,</p>
-<p>Un compte {{ TITLE }} existe déjà avec cette adresse email.</p>
-<p><b>Pour vous reconnecter, nous vous invitons à utiliser le lien de connexion initial reçu par mail lors de la création de votre compte. Vous l’avez peut-être même enregistré sur votre ordinateur/téléphone/tablette.</b></p>
-<p>Si vous aviez défini un mot de passe, vous pouvez également utiliser ce lien :</p>
-<div align="center"><br>
-    <a style="padding: 0.7em 2em; background: #888888; border-radius: 30px;
-              font-weight: bold; text-decoration: none !important; color: white; text-transform: uppercase; text-wrap: nowrap;" href="{{ LOGIN }}">Connexion par mot de passe</a>
-<br><br></div>
-<p>Pour rappel, nous utilisons un système de chiffrement complexe pour assurer la sécurité et l’anonymat de vos données. Nous ne sommes donc pas en mesure de vous renvoyer un nouveau lien de connexion en cas de perte de celui-ci.
-<p>Si vous rencontrez un problème, vous pouvez contacter l’équipe de {{ TITLE }} : <a href="mailto:{{ CONTACT }}">{{ CONTACT }}</a></p>
-<p>Nous vous sommes très reconnaissants de votre implication dans la recherche sur les psychotraumatismes.</p>
-<p><i>L’équipe de {{ TITLE }}</i><br>
-<a href="mailto:{{ CONTACT }}">{{ CONTACT }}</a></p>
-</body></html>)",
-    {}
-};
-
-static const smtp_MailContent ContinueStudy = {
-    "Rappel {{ TITLE }} : participez à {{ STUDY }} !",
-    R"(Bonjour,
-
-L'étude {{ STUDY }} continue !
-
-Vous pouvez reprendre votre participation et continuer à nous aider.
-
-Pous vous connecter à {{ TITLE }}, vous devrez vous munir du mail que vous avez reçu lors de votre inscription, dont l'objet est « Connexion à {{ TITLE }} ! », et cliquer sur le lien présent dans le mail.
-
-Nous vous sommes très reconnaissants de votre implication dans la recherche sur les psychotraumatismes.
-
-L'équipe de {{ TITLE }}
-{{ CONTACT }}
-
-----------------------------------------
-
-Si vous ne souhaitez plus recevoir de rappels liés à cette étude, utilisez le lien suivant :
-
-{{ STOP }})",
-    R"(<html lang="fr"><body>
-<p>Bonjour,</p>
-<p>L'étude {{ STUDY }} continue !</p>
-<p>Vous pouvez reprendre votre participation et continuer à nous aider.</p>
-<p>Pous vous connecter à {{ TITLE }}, vous devrez vous munir du mail que vous avez reçu lors de votre inscription, dont l'objet est <b>« Connexion à {{ TITLE }} ! »</b>, et cliquer sur le lien présent dans le mail.</p>
-<p>Nous vous sommes très reconnaissants de votre implication dans la recherche sur les psychotraumatismes.</p>
-<p><i>L’équipe de {{ TITLE }}</i><br>
-<a href="mailto:{{ CONTACT }}">{{ CONTACT }}</a></p>
-<p style="font-size: 0.8em; color: #888;"><i>Si vous ne souhaitez plus recevoir de rappels liés à cette étude, utilisez le lien suivant :</i> <a href="{{ STOP }}">Ne plus recevoir de rappels</a></p>
-</body></html>)",
-    {}
-};
-
 static const int RemindDelays[] = { 2, 10 };
 
 struct EventInfo {
@@ -210,28 +65,25 @@ static bool SendNewMail(const char *to, const char *uid, Span<const uint8_t> tke
     FmtArg fmt = FmtHex(tkey);
     const char *login = Fmt(alloc, "%1/session#uid=%2&tk=%3&r=%4", config.url, uid, fmt, registration).ptr;
 
-    const auto patch = [&](Span<const char> text) {
-        Span<const char> ret = PatchFile(text, alloc, [&](Span<const char> expr, StreamWriter *writer) {
-            Span<const char> key = TrimStr(expr);
+    const auto patch = [&](Span<const char> expr, StreamWriter *writer) {
+        Span<const char> key = TrimStr(expr);
 
-            if (key == "TITLE") {
-                writer->Write(config.title);
-            } else if (key == "CONTACT") {
-                writer->Write(config.contact);
-            } else if (key == "MAIL") {
-                writer->Write(to);
-            } else if (key == "LOGIN") {
-                writer->Write(login);
-            } else {
-                Print(writer, "{{%1}}", expr);
-            }
-        });
-        return ret;
+        if (key == "TITLE") {
+            writer->Write(config.title);
+        } else if (key == "CONTACT") {
+            writer->Write(config.contact);
+        } else if (key == "MAIL") {
+            writer->Write(to);
+        } else if (key == "LOGIN") {
+            writer->Write(login);
+        } else {
+            Print(writer, "{{%1}}", expr);
+        }
     };
 
-    content.subject = patch(NewUser.subject);
-    content.html = patch(NewUser.html);
-    content.text = patch(NewUser.text);
+    content.subject = Fmt(alloc, T("Connexion à %1 !"), config.title);
+    content.html = PatchMail("new_user.html", alloc, patch);
+    content.text = PatchMail("new_user.txt", alloc, patch);
 
     Span<const uint8_t> png;
     {
@@ -263,30 +115,25 @@ static bool SendExistingMail(const char *to, bool password, Allocator *alloc)
 {
     smtp_MailContent content;
 
-    const auto patch = [&](Span<const char> text) {
-        Span<const char> ret = PatchFile(text, alloc, [&](Span<const char> expr, StreamWriter *writer) {
-            Span<const char> key = TrimStr(expr);
+    const auto patch = [&](Span<const char> expr, StreamWriter *writer) {
+        Span<const char> key = TrimStr(expr);
 
-            if (key == "TITLE") {
-                writer->Write(config.title);
-            } else if (key == "CONTACT") {
-                writer->Write(config.contact);
-            } else if (key == "MAIL") {
-                writer->Write(to);
-            } else if (key == "LOGIN") {
-                Print(writer, "%1/connexion", config.url);
-            } else {
-                Print(writer, "{{%1}}", expr);
-            }
-        });
-        return ret;
+        if (key == "TITLE") {
+            writer->Write(config.title);
+        } else if (key == "CONTACT") {
+            writer->Write(config.contact);
+        } else if (key == "MAIL") {
+            writer->Write(to);
+        } else if (key == "LOGIN") {
+            Print(writer, "%1/connexion", config.url);
+        } else {
+            Print(writer, "{{%1}}", expr);
+        }
     };
 
-    const smtp_MailContent &model = password ? ExistingWithPassword : ExistingNoPassword;
-
-    content.subject = patch(model.subject);
-    content.html = patch(model.html);
-    content.text = patch(model.text);
+    content.subject = Fmt(alloc, T("Nouvelle connexion à %1"), config.title);
+    content.html = PatchMail(password ? "existing_user_with_password.html" : "existing_user_no_password.html", alloc, patch);
+    content.text = PatchMail(password ? "existing_user_with_password.txt" : "existing_user_no_password.txt", alloc, patch);
 
     return PostMail(to, content);
 }
@@ -297,30 +144,27 @@ static bool SendContinueMail(const char *to, const char *uid, int64_t study, con
 
     const char *stop = Fmt(alloc, "%1/rappels#uid=%2&study=%3", config.url, uid, study).ptr;
 
-    const auto patch = [&](Span<const char> text) {
-        Span<const char> ret = PatchFile(text, alloc, [&](Span<const char> expr, StreamWriter *writer) {
-            Span<const char> key = TrimStr(expr);
+    const auto patch = [&](Span<const char> expr, StreamWriter *writer) {
+        Span<const char> key = TrimStr(expr);
 
-            if (key == "TITLE") {
-                writer->Write(config.title);
-            } else if (key == "CONTACT") {
-                writer->Write(config.contact);
-            } else if (key == "MAIL") {
-                writer->Write(to);
-            } else if (key == "STUDY") {
-                writer->Write(title);
-            } else if (key == "STOP") {
-                writer->Write(stop);
-            } else {
-                Print(writer, "{{%1}}", expr);
-            }
-        });
-        return ret;
+        if (key == "TITLE") {
+            writer->Write(config.title);
+        } else if (key == "CONTACT") {
+            writer->Write(config.contact);
+        } else if (key == "MAIL") {
+            writer->Write(to);
+        } else if (key == "STUDY") {
+            writer->Write(title);
+        } else if (key == "STOP") {
+            writer->Write(stop);
+        } else {
+            Print(writer, "{{%1}}", expr);
+        }
     };
 
-    content.subject = patch(ContinueStudy.subject);
-    content.html = patch(ContinueStudy.html);
-    content.text = patch(ContinueStudy.text);
+    content.subject = Fmt(alloc, T("Rappel %1 : participez à %2 !"), config.title, title);
+    content.html = PatchMail("continue_study.html", alloc, patch);
+    content.text = PatchMail("continue_study.txt", alloc, patch);
 
     return PostMail(to, content);
 }
