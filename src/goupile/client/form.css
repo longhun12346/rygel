@@ -265,7 +265,13 @@ html:not(.small) .fm_widget.compact > .fm_calc { padding-top: 4px; }
 /* -------------------- Nice radio and checkboxes -------------------- */
 
 .fm_radio { display: inline-block; }
+.fm_radio.tree { padding-left: 0.5em; }
 .fm_radio + .fm_radio { padding-top: 3px; }
+.fm_radio > .fm_group {
+    margin: 0.2em 0 0.5em -0.5em;
+    font-style: italic;
+}
+.fm_radio > br + .fm_group { margin-top: 0.8em; }
 .fm_radio > input {
     position: absolute;
     opacity: 0;
@@ -316,7 +322,13 @@ html:not(.small) .fm_widget.compact > .fm_calc { padding-top: 4px; }
 .fm_radio > input:hover + label::after { background-color: #999; }
 
 .fm_check { display: inline-block; }
+.fm_check.tree { padding-left: 0.5em; }
 .fm_check + .fm_check { padding-top: 3px; }
+.fm_check > .fm_group {
+    margin: 0.2em 0 0.5em -0.5em;
+    font-style: italic;
+}
+.fm_check > br + .fm_group { margin-top: 0.8em; }
 .fm_check > input {
     position: absolute;
     opacity: 0;

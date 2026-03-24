@@ -579,11 +579,11 @@ function FormBuilder(state, model, options = {}) {
         }
     };
 
-    this.enumButtons = function(key, label, props = [], options = {}) {
+    this.enumButtons = function(key, label, choices = [], options = {}) {
         options = expandOptions(options);
         key = decodeKey(key, options);
 
-        props = normalizePropositions(props);
+        let [, props] = normalizePropositions(choices);
 
         let value = readValue(key, options, value => {
             if (Array.isArray(value))
@@ -642,11 +642,11 @@ function FormBuilder(state, model, options = {}) {
         return self.enum(key, label, [[true, T.yes], [false, T.no]], options);
     };
 
-    this.enumDrop = function(key, label, props = [], options = {}) {
+    this.enumDrop = function(key, label, choices = [], options = {}) {
         options = expandOptions(options);
         key = decodeKey(key, options);
 
-        props = normalizePropositions(props);
+        let [groups, props] = normalizePropositions(choices);
 
         let value = readValue(key, options, value => {
             if (Array.isArray(value))
@@ -665,9 +665,20 @@ function FormBuilder(state, model, options = {}) {
                     ${options.untoggle || !props.some(p => p != null && value === p.value) ?
                         html`<option value="undefined" .selected=${live(value == null)}
                                      ?disabled=${options.readonly && value != null}>${T.missing_value_choice}</option>` : ''}
-                    ${props.map(p =>
-                        html`<option value=${Util.valueToStr(p.value)} .selected=${live(value === p.value)}
-                                     ?disabled=${options.readonly && value !== p.value}>${p.label}</option>`)}
+                    ${groups.map(group => {
+                        let children = group.props.map(p => html`<option value=${Util.valueToStr(p.value)} .selected=${live(value === p.value)}
+                                                                         ?disabled=${options.readonly && value !== p.value}>${p.label}</option>`);
+
+                        if (group.title != null) {
+                            return html`
+                                <optgroup label=${group.title}>
+                                    ${children}
+                                </optgroup>
+                            `;
+                        } else {
+                            return children;
+                        }
+                    })}
                 </select>
                 ${makePrefixOrSuffix('fm_suffix', options.suffix, value)}
             </div>
@@ -687,11 +698,11 @@ function FormBuilder(state, model, options = {}) {
         updateValue(key, Util.strToValue(e.target.value));
     }
 
-    this.enumRadio = function(key, label, props = [], options = {}) {
+    this.enumRadio = function(key, label, choices = [], options = {}) {
         options = expandOptions(options);
         key = decodeKey(key, options);
 
-        props = normalizePropositions(props);
+        let [groups, props] = normalizePropositions(choices);
 
         let value = readValue(key, options, value => {
             if (Array.isArray(value))
@@ -702,27 +713,39 @@ function FormBuilder(state, model, options = {}) {
 
         let tab0 = !props.some(p => value === p.value);
         let tabbed = false;
+        let cls = 'fm_radio';
+
+        if (options.readonly)
+            cls += ' readonly';
+        if (groups.length != 1 || groups[0].title != null)
+            cls += ' tree';
+
+        let counter = 0;
 
         let render = (intf, id) => renderWrappedWidget(intf, html`
             ${makeLabel(intf)}
-            <div class=${options.readonly ? 'fm_radio readonly' : 'fm_radio'}
-                 style=${makeRadioStyle(options)} id=${id}>
-                ${props.map((p, i) => {
-                    let tab = !tabbed && (tab0 || value === p.value);
-                    tabbed |= tab;
+            <div class=${cls} style=${makeRadioStyle(options)} id=${id}>
+                ${groups.map(group => html`
+                    ${group.title != null ? html`<div class="fm_group">${group.title}</div>` : ''}
+                    ${group.props.map(p => {
+                        let tab = !tabbed && (tab0 || value === p.value);
+                        tabbed |= tab;
 
-                    // Remember to set name (and id) after .checked, because otherwise when we update
-                    // the form with a new FormState on the same page, a previously checked radio button
-                    // can unset a previous one when it's name is updated but the checked value is
-                    // still true, meaning '.checked=false' hasn't run yet.
-                    return html`<input type="radio" value=${Util.valueToStr(p.value)}
-                                       ?disabled=${options.disabled || false} ?autofocus=${!i && options.focus}
-                                       .checked=${live(value === p.value)}
-                                       name=${id} id=${`${id}.${i}`}
-                                       @click=${e => handleEnumRadioChange(e, key, options.untoggle && value === p.value)}
-                                       @keydown=${handleRadioOrCheckKey} tabindex=${tab ? 0 : -1} />
-                                <label for=${`${id}.${i}`}>${p.label}</label><br/>`;
-                })}
+                        let idx = counter++;
+
+                        // Remember to set name (and id) after .checked, because otherwise when we update
+                        // the form with a new FormState on the same page, a previously checked radio button
+                        // can unset a previous one when it's name is updated but the checked value is
+                        // still true, meaning '.checked=false' hasn't run yet.
+                        return html`<input type="radio" value=${Util.valueToStr(p.value)}
+                                           ?disabled=${options.disabled || false} ?autofocus=${!idx && options.focus}
+                                           .checked=${live(value === p.value)}
+                                           name=${id} id=${`${id}.${idx}`}
+                                           @click=${e => handleEnumRadioChange(e, key, options.untoggle && value === p.value)}
+                                           @keydown=${handleRadioOrCheckKey} tabindex=${tab ? 0 : -1} />
+                                    <label for=${`${id}.${idx}`}>${p.label}</label><br/>`;
+                    })}
+                `)}
             </div>
         `);
 
@@ -758,11 +781,11 @@ function FormBuilder(state, model, options = {}) {
         }
     };
 
-    this.multiButtons = function(key, label, props = [], options = {}) {
+    this.multiButtons = function(key, label, choices = [], options = {}) {
         options = expandOptions(options);
         key = decodeKey(key, options);
 
-        props = normalizePropositions(props);
+        let [, props] = normalizePropositions(choices);
 
         let value = readValue(key, options, value => {
             if (!Array.isArray(value)) {
@@ -839,11 +862,11 @@ function FormBuilder(state, model, options = {}) {
         }
     }
 
-    this.multiCheck = function(key, label, props = [], options = {}) {
+    this.multiCheck = function(key, label, choices = [], options = {}) {
         options = expandOptions(options);
         key = decodeKey(key, options);
 
-        props = normalizePropositions(props);
+        let [groups, props] = normalizePropositions(choices);
 
         let value = readValue(key, options, value => {
             let nullable = props.some(p => p.value == null);
@@ -861,17 +884,31 @@ function FormBuilder(state, model, options = {}) {
             return value;
         });
 
+        let cls = 'fm_check';
+
+        if (options.readonly)
+            cls += ' readonly';
+        if (groups.length != 1 || groups[0].title != null)
+            cls += ' tree';
+
+        let counter = 0;
+
         let render = (intf, id) => renderWrappedWidget(intf, html`
             ${makeLabel(intf)}
-            <div class=${options.readonly ? 'fm_check readonly' : 'fm_check'}
-                 style=${makeRadioStyle(options)} id=${id}>
-                ${props.map((p, i) =>
-                    html`<input type="checkbox" id=${`${id}.${i}`} value=${Util.valueToStr(p.value)}
-                                ?disabled=${options.disabled} ?autofocus=${options.focus}
-                                .checked=${live(value?.includes?.(p.value))}
-                                @click=${e => handleMultiCheckChange(e, key)}
-                                @keydown=${handleRadioOrCheckKey} tabindex=${i ? -1 : 0} />
-                         <label for=${`${id}.${i}`}>${p.label}</label><br/>`)}
+            <div class=${cls} style=${makeRadioStyle(options)} id=${id}>
+                ${groups.map(group => html`
+                    ${group.title != null ? html`<div class="fm_group">${group.title}</div>` : ''}
+                    ${group.props.map(p => {
+                        let idx = counter++;
+
+                        return html`<input type="checkbox" id=${`${id}.${idx}`} value=${Util.valueToStr(p.value)}
+                                           ?disabled=${options.disabled} ?autofocus=${options.focus}
+                                           .checked=${live(value?.includes?.(p.value))}
+                                           @click=${e => handleMultiCheckChange(e, key)}
+                                           @keydown=${handleRadioOrCheckKey} tabindex=${idx ? -1 : 0} />
+                                    <label for=${`${id}.${idx}`}>${p.label}</label><br/>`;
+                    })}
+                `)}
             </div>
         `);
 
@@ -925,30 +962,50 @@ function FormBuilder(state, model, options = {}) {
         return { value: value, label: label || value };
     };
 
-    function normalizePropositions(props) {
-        if (!Array.isArray(props))
-            props = Array.from(props);
+    function normalizePropositions(choices) {
+        if (Util.isPodObject(choices)) {
+            let groups = [];
+            let props = [];
 
-        props = props.filter(c => c != null).map(c => {
-            if (Array.isArray(c)) {
-                return { value: c[0], label: c[1] || c[0] };
-            } else if (typeof c === 'string') {
-                let sep_pos = c.indexOf(':::');
-                if (sep_pos >= 0) {
-                    let value = c.substr(0, sep_pos);
-                    let label = c.substr(sep_pos + 3);
-                    return { value: value, label: label || value };
-                } else {
-                    return { value: c, label: c };
-                }
-            } else if (typeof c === 'number') {
-                return { value: c, label: c };
-            } else {
-                return c;
+            for (let key in choices) {
+                let [, children] = normalizePropositions(choices[key]);
+
+                groups.push({
+                    title: key,
+                    props: children
+                });
+                props.push(...children);
             }
-        });
 
-        return props;
+            return [groups, props];
+        } else {
+            if (!Array.isArray(choices))
+                choices = Array.from(choices);
+
+            choices = choices.filter(c => c != null).map(c => {
+                if (Array.isArray(c)) {
+                    return { value: c[0], label: c[1] || c[0] };
+                } else if (typeof c === 'string') {
+                    let sep_pos = c.indexOf(':::');
+                    if (sep_pos >= 0) {
+                        let value = c.substr(0, sep_pos);
+                        let label = c.substr(sep_pos + 3);
+                        return { value: value, label: label || value };
+                    } else {
+                        return { value: c, label: c };
+                    }
+                } else if (typeof c === 'number') {
+                    return { value: c, label: c };
+                } else {
+                    return c;
+                }
+            });
+
+            let groups = [{ title: null, props: choices }];
+            let props = choices;
+
+            return [groups, props];
+        }
     }
 
     this.date = function(key, label, options = {}) {
