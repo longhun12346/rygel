@@ -1737,6 +1737,8 @@ instead of:
         for (;;) {
             if (name[0] == '*') {
                 options.mandatory = true;
+            } else if (name[0] == '?') {
+                options.mandatory = false;
             } else if (name[0] == '+') {
                 options.public = true;
             } else {
