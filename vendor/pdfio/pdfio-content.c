@@ -13,7 +13,7 @@
 #include "pdfio-cgats001-compat.h"
 #include "ttf.h"
 #ifdef HAVE_LIBPNG
-#  include <png.h>
+#  include "../libpng/png.h"
 #endif // HAVE_LIBPNG
 #include <math.h>
 #ifndef M_PI
