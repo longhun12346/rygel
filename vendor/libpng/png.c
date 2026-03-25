@@ -101,7 +101,7 @@ png_sig_cmp(png_const_bytep sig, size_t start, size_t num_to_check)
 #if defined(PNG_READ_SUPPORTED) || defined(PNG_WRITE_SUPPORTED)
 /* Function to allocate memory for zlib */
 PNG_FUNCTION(voidpf /* PRIVATE */,
-png_zalloc,(voidpf png_ptr, uInt items, uInt size),
+png_zalloc,(voidpf png_ptr, size_t items, size_t size),
     PNG_ALLOCATED)
 {
    png_alloc_size_t num_bytes = size;

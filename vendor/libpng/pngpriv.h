@@ -1188,7 +1188,7 @@ PNG_INTERNAL_FUNCTION(void, png_free_jmpbuf,
 
 /* Function to allocate memory for zlib.  PNGAPI is disallowed. */
 PNG_INTERNAL_FUNCTION(voidpf, png_zalloc,
-   (voidpf png_ptr, uInt items, uInt size),
+   (voidpf png_ptr, size_t items, size_t size),
    PNG_ALLOCATED);
 
 /* Function to free memory for zlib.  PNGAPI is disallowed. */
