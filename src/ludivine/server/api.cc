@@ -170,7 +170,7 @@ static bool ProduceLoginPdf(const char *title, const char *login, Allocator *all
             double x = 0.5 * (width - pdfioContentTextMeasure(font, careful, size));
             double y = 0.3 * height;
 
-            pdfioContentSetFillColorDeviceGray(page, 0.0);
+            pdfioContentSetFillColorDeviceRGB(page, 0.859, 0.039, 0.039); // #db0a0a
 
             pdfioContentTextBegin(page);
             pdfioContentSetTextFont(page, "FT", size);
