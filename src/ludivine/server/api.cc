@@ -149,7 +149,7 @@ static bool ProduceLoginPdf(const char *title, const char *login, Allocator *all
 
         // Title
         {
-            double size = 32.0;
+            double size = 28.0;
             double x = 0.5 * (width - pdfioContentTextMeasure(font, title, size));
             double y = 0.7 * height;
 
