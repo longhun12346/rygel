@@ -8,9 +8,10 @@
 #include "lib/native/wrap/qrcode.hh"
 #include "ludivine.hh"
 #include "mail.hh"
+#include "vendor/libsodium/src/libsodium/include/sodium.h"
 #include "vendor/pdfio/pdfio.h"
 #include "vendor/pdfio/pdfio-content.h"
-#include "vendor/libsodium/src/libsodium/include/sodium.h"
+#include "vendor/stb/stb_image.h"
 
 namespace K {
 
@@ -102,10 +103,37 @@ static bool CreateLoginDocument(const char *title, const char *login, Allocator 
     pdfio_obj_t *font = pdfioFileCreateFontObjFromBase(pdf, "Helvetica");
     if (!font)
         return false;
-    pdfioPageDictAddFont(dict, "FT", font);
+    pdfioPageDictAddFont(dict, "FONT", font);
+
+    // Prepare logo
+    pdfio_obj_t *logo;
+    {
+        const AssetInfo *asset = FindEmbedAsset("src/ludivine/server/mails/logo.png");
+        K_ASSERT(asset);
+
+        HeapArray<uint8_t> png;
+        {
+            StreamReader reader(asset->data, "<logo>", asset->compression_type);
+            StreamWriter writer(&png, "<png>");
+
+            if (!SpliceStream(&reader, -1, &writer))
+                return false;
+        }
+
+        int width, height, channels;
+        uint8_t *img = stbi_load_from_memory(png.ptr, png.len, &width, &height, &channels, 4);
+        K_ASSERT(img);
+        K_DEFER { free(img); };
+
+        logo = pdfioFileCreateImageObjFromData(pdf, img, width, height, 3, nullptr, true, false);
+        if (!logo)
+            return false;
+
+        pdfioPageDictAddImage(dict, "LOGO", logo);
+    }
 
     // Prepare QR code
-    pdfio_obj_t *img;
+    pdfio_obj_t *code;
     {
         qr_RawCode qr;
         if (!qr_EncodeText(login, &qr))
@@ -122,11 +150,11 @@ static bool CreateLoginDocument(const char *title, const char *login, Allocator 
             }
         }
 
-        img = pdfioFileCreateImageObjFromData(pdf, grayscale.ptr, size, size, 1, nullptr, false, false);
-        if (!img)
+        code = pdfioFileCreateImageObjFromData(pdf, grayscale.ptr, size, size, 1, nullptr, false, false);
+        if (!code)
             return false;
 
-        pdfioPageDictAddImage(dict, "QR", img);
+        pdfioPageDictAddImage(dict, "QR", code);
     }
 
     // Draw page
@@ -137,14 +165,14 @@ static bool CreateLoginDocument(const char *title, const char *login, Allocator 
         double width = 595.28;
         double height = 792.0;
 
-        // QR code
+        // Logo
         {
-            double w = pdfioImageGetWidth(img) * 4.0;
-            double h = pdfioImageGetHeight(img) * 4.0;
+            double w = 0.4 * width;
+            double h = w * pdfioImageGetHeight(logo) / pdfioImageGetWidth(logo);
             double x = 0.5 * (width - w);
-            double y = 0.5 * (height - h);
+            double y = 0.95 * (height - h);
 
-            pdfioContentDrawImage(page, "QR", x, y, w, h);
+            pdfioContentDrawImage(page, "LOGO", x, y, w, h);
         }
 
         // Title
@@ -156,10 +184,20 @@ static bool CreateLoginDocument(const char *title, const char *login, Allocator 
             pdfioContentSetFillColorDeviceGray(page, 0.0);
 
             pdfioContentTextBegin(page);
-            pdfioContentSetTextFont(page, "FT", size);
+            pdfioContentSetTextFont(page, "FONT", size);
             pdfioContentTextMoveTo(page, x, y);
             pdfioContentTextShow(page, false, title);
             pdfioContentTextEnd(page);
+        }
+
+        // QR code
+        {
+            double w = pdfioImageGetWidth(code) * 4.0;
+            double h = pdfioImageGetHeight(code) * 4.0;
+            double x = 0.5 * (width - w);
+            double y = 0.5 * (height - h);
+
+            pdfioContentDrawImage(page, "QR", x, y, w, h);
         }
 
         // Be careful :)
@@ -168,7 +206,7 @@ static bool CreateLoginDocument(const char *title, const char *login, Allocator 
 
             double size = 12.0;
             double x = 0.5 * (width - pdfioContentTextMeasure(font, careful, size));
-            double y = 0.3 * height;
+            double y = 0.05 * height;
 
             pdfioContentSetFillColorDeviceRGB(page, 0.859, 0.039, 0.039); // #db0a0a
 
