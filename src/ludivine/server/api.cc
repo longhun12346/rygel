@@ -59,7 +59,7 @@ static bool IsUUIDValid(Span<const char> uuid)
     return true;
 }
 
-static bool ProduceLoginPdf(const char *title, const char *login, Allocator *alloc, HeapArray<uint8_t> *out_pdf)
+static bool CreateLoginDocument(const char *title, const char *login, Allocator *alloc, HeapArray<uint8_t> *out_pdf)
 {
     struct PdfContext {
         HeapArray<uint8_t> *out;
@@ -218,7 +218,7 @@ static bool SendNewMail(const char *to, const char *uid, Span<const uint8_t> tke
     const char *filename = Fmt(alloc, "Connexion Session %1.pdf", config.title).ptr;
 
     HeapArray<uint8_t> pdf;
-    if (!ProduceLoginPdf(title, login, alloc, &pdf))
+    if (!CreateLoginDocument(title, login, alloc, &pdf))
         return false;
 
     smtp_AttachedFile files[] = {
