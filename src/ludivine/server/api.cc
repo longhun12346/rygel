@@ -8,6 +8,8 @@
 #include "lib/native/wrap/qrcode.hh"
 #include "ludivine.hh"
 #include "mail.hh"
+#include "vendor/pdfio/pdfio.h"
+#include "vendor/pdfio/pdfio-content.h"
 #include "vendor/libsodium/src/libsodium/include/sodium.h"
 
 namespace K {
@@ -57,6 +59,133 @@ static bool IsUUIDValid(Span<const char> uuid)
     return true;
 }
 
+static bool ProduceLoginPdf(const char *title, const char *login, Allocator *alloc, HeapArray<uint8_t> *out_pdf)
+{
+    struct PdfContext {
+        HeapArray<uint8_t> *out;
+        const char *error;
+
+        Allocator *alloc;
+    };
+    PdfContext ctx = {
+        .out = out_pdf,
+        .error = "Unknown error",
+        .alloc = alloc
+    };
+
+    const auto write = [](void *udata, const void *data, size_t len) {
+        PdfContext *ctx = (PdfContext *)udata;
+        Span<const uint8_t> buf = MakeSpan((const uint8_t *)data, (Size)len);
+
+        ctx->out->Append(buf);
+        return (Size)len;
+    };
+    const auto error = [](pdfio_file_t *, const char *msg, void *udata) {
+        PdfContext *ctx = (PdfContext *)udata;
+
+        ctx->error = DuplicateString(msg, ctx->alloc).ptr;
+        return false;
+    };
+
+    pdfio_file_t *pdf = pdfioFileCreateOutput(write, &ctx, nullptr, nullptr, nullptr, error, nullptr);
+    K_DEFER_NC(err_guard, len = ctx.out->len) {
+        ctx.out->RemoveFrom(len);
+        LogError("Failed to create PDF: %1", ctx.error);
+
+        pdfioFileClose(pdf);
+    };
+    if (!pdf)
+        return false;
+
+    pdfio_dict_t *dict = pdfioDictCreate(pdf);
+
+    pdfio_obj_t *font = pdfioFileCreateFontObjFromBase(pdf, "Helvetica");
+    if (!font)
+        return false;
+    pdfioPageDictAddFont(dict, "FT", font);
+
+    // Prepare QR code
+    pdfio_obj_t *img;
+    {
+        qr_RawCode qr;
+        if (!qr_EncodeText(login, &qr))
+            return false;
+
+        int border = 2;
+        int size = qr.size + border * 2;
+        Span<uint8_t> grayscale = AllocateSpan<uint8_t>(alloc, size * size);
+
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                Size offset = y * size + x;
+                grayscale[offset] = !qr.GetValue(x - border, y - border) * 0xFF;
+            }
+        }
+
+        img = pdfioFileCreateImageObjFromData(pdf, grayscale.ptr, size, size, 1, nullptr, false, false);
+        if (!img)
+            return false;
+
+        pdfioPageDictAddImage(dict, "QR", img);
+    }
+
+    // Draw page
+    {
+        pdfio_stream_t *page = pdfioFileCreatePage(pdf, dict);
+        K_DEFER { pdfioStreamClose(page); };
+
+        double width = 595.28;
+        double height = 792.0;
+
+        // QR code
+        {
+            double w = pdfioImageGetWidth(img) * 4.0;
+            double h = pdfioImageGetHeight(img) * 4.0;
+            double x = 0.5 * (width - w);
+            double y = 0.5 * (height - h);
+
+            pdfioContentDrawImage(page, "QR", x, y, w, h);
+        }
+
+        // Title
+        {
+            double size = 32.0;
+            double x = 0.5 * (width - pdfioContentTextMeasure(font, title, size));
+            double y = 0.7 * height;
+
+            pdfioContentSetFillColorDeviceGray(page, 0.0);
+
+            pdfioContentTextBegin(page);
+            pdfioContentSetTextFont(page, "FT", size);
+            pdfioContentTextMoveTo(page, x, y);
+            pdfioContentTextShow(page, false, title);
+            pdfioContentTextEnd(page);
+        }
+
+        // Be careful :)
+        {
+            const char *careful = "Gardez ce fichier en sécurité, ne le divulgez pas ou vos données pourraient être compromises !";
+
+            double size = 12.0;
+            double x = 0.5 * (width - pdfioContentTextMeasure(font, careful, size));
+            double y = 0.3 * height;
+
+            pdfioContentSetFillColorDeviceGray(page, 0.0);
+
+            pdfioContentTextBegin(page);
+            pdfioContentSetTextFont(page, "FT", size);
+            pdfioContentTextMoveTo(page, x, y);
+            pdfioContentTextShow(page, false, careful);
+            pdfioContentTextEnd(page);
+        }
+    }
+
+    err_guard.Disable();
+    pdfioFileClose(pdf);
+
+    return true;
+}
+
 static bool SendNewMail(const char *to, const char *uid, Span<const uint8_t> tkey, int registration, Allocator *alloc)
 {
     smtp_MailContent content;
@@ -85,25 +214,15 @@ static bool SendNewMail(const char *to, const char *uid, Span<const uint8_t> tke
     content.html = PatchMail("new_user.html", alloc, patch);
     content.text = PatchMail("new_user.txt", alloc, patch);
 
-    Span<const uint8_t> png;
-    {
-        HeapArray<uint8_t> buf(alloc);
+    const char *title = Fmt(alloc, "Connexion à %1", config.title).ptr;
+    const char *filename = Fmt(alloc, "Connexion Session %1.pdf", config.title).ptr;
 
-        qr_RawCode qr;
-        if (!qr_EncodeText(login, &qr))
-            return false;
-        qr_ExportPng(qr, 0, &buf);
-
-        png = buf.Leak();
-    }
-
-    const char *filename = Fmt(alloc, "Recuperation Session %1.txt", config.title).ptr;
-    const char *careful = "Gardez ce fichier en sécurité, ne le divulgez pas ou vos données pourraient être compromises !";
-    Span<char> attachment = Fmt(alloc, "Récupération de la connexion à %1\n\n===\n%2\n%3/%4\n===\n\n%5", config.title, uid, fmt, registration, careful);
+    HeapArray<uint8_t> pdf;
+    if (!ProduceLoginPdf(title, login, alloc, &pdf))
+        return false;
 
     smtp_AttachedFile files[] = {
-        { .mimetype = "image/png", .id = "qrcode.png", .inlined = true, .data = png },
-        { .mimetype = "text/plain", .name = filename, .data = attachment.As<const uint8_t>() }
+        { .mimetype = "application/pdf", .name = filename, .data = pdf }
     };
 
     content.files = files;
