@@ -1381,13 +1381,12 @@ void HandleChangeSecret(http_IO *io, const char *title)
 
     Span<const char> image;
     {
-        HeapArray<uint8_t> png;
+        qr_RawCode qr;
+        if (!qr_EncodeText(url, &qr))
+            return;
 
-        StreamWriter st(&png, "<png>");
-        if (!qr_EncodeTextToPng(url, 0, &st))
-            return;
-        if (!st.Close())
-            return;
+        HeapArray<uint8_t> png;
+        qr_ExportPng(qr, 0, &png);
 
         Span<const char> prefix = "data:image/png;base64,";
         Size needed = prefix.len + (Size)sodium_base64_encoded_len(png.len, sodium_base64_VARIANT_ORIGINAL);

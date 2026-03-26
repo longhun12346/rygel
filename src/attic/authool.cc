@@ -391,10 +391,13 @@ Options:
     LogInfo("URL: %!..+%1%!0", url);
 
     if (!skip_qrcode) {
+        qr_RawCode qr;
+        if (!qr_EncodeText(url, &qr))
+            return 1;
+
         if (png_filename) {
             StreamWriter st(png_filename);
-            if (!qr_EncodeTextToPng(url, 12, &st))
-                return 1;
+            qr_ExportPng(qr, 12, &st);
             if (!st.Close())
                 return 1;
 
@@ -403,9 +406,7 @@ Options:
             LogInfo();
 
             bool ansi = FileIsVt100(STDOUT_FILENO);
-
-            if (!qr_EncodeTextToBlocks(url, ansi, 2, StdOut))
-                return 1;
+            qr_ExportBlocks(qr, ansi, 2, StdOut);
         }
     }
 
@@ -686,29 +687,27 @@ Options:
     }
 
     // Encode QR code
-    if (png_filename) {
-        StreamWriter st(png_filename);
+    {
+        qr_RawCode qr;
 
         if (force_binary) {
-            if (!qr_EncodeBinaryToPng(data, 12, &st))
+            if (!qr_EncodeBinary(data, &qr))
                 return 1;
         } else {
-            if (!qr_EncodeTextToPng(data.As<const char>(), 12, &st))
+            if (!qr_EncodeText(data.As<const char>(), &qr))
                 return 1;
         }
-        if (!st.Close())
-            return 1;
 
-        LogInfo("QR code written to: %!..+%1%!0", png_filename);
-    } else {
-        bool ansi = FileIsVt100(STDOUT_FILENO);
-
-        if (force_binary) {
-            if (!qr_EncodeBinaryToBlocks(data, ansi, 2, StdOut))
+        if (png_filename) {
+            StreamWriter st(png_filename);
+            qr_ExportPng(qr, 12, &st);
+            if (!st.Close())
                 return 1;
+
+            LogInfo("QR code written to: %!..+%1%!0", png_filename);
         } else {
-            if (!qr_EncodeTextToBlocks(data.As<const char>(), ansi, 2, StdOut))
-                return 1;
+            bool ansi = FileIsVt100(STDOUT_FILENO);
+            qr_ExportBlocks(qr, ansi, 2, StdOut);
         }
     }
 

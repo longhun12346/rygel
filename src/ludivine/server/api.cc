@@ -89,10 +89,10 @@ static bool SendNewMail(const char *to, const char *uid, Span<const uint8_t> tke
     {
         HeapArray<uint8_t> buf(alloc);
 
-        StreamWriter st(&buf, "<png>");
-        if (!qr_EncodeTextToPng(login, 0, &st))
+        qr_RawCode qr;
+        if (!qr_EncodeText(login, &qr))
             return false;
-        st.Close();
+        qr_ExportPng(qr, 0, &buf);
 
         png = buf.Leak();
     }

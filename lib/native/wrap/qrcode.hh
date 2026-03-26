@@ -7,10 +7,30 @@
 
 namespace K {
 
-bool qr_EncodeTextToPng(Span<const char> text, int border, StreamWriter *out_st);
-bool qr_EncodeBinaryToPng(Span<const uint8_t> data, int border, StreamWriter *out_st);
+struct qr_RawCode {
+    int size;
+    uint8_t bits[4096];
 
-bool qr_EncodeTextToBlocks(Span<const char> text, bool ansi, int border, StreamWriter *out_st);
-bool qr_EncodeBinaryToBlocks(Span<const uint8_t> data, bool ansi, int border, StreamWriter *out_st);
+    bool GetValue(int x, int y) const;
+};
+
+inline bool qr_RawCode::GetValue(int x, int y) const
+{
+    if (x < 0 || x >= size || y < 0 || y >= size)
+        return false;
+
+    int offset = y * size + x;
+    int idx = offset >> 3;
+    int bit = offset & 0x7;
+
+    return bits[idx] & (1u << bit);
+}
+
+bool qr_EncodeText(Span<const char> text, qr_RawCode *out_code);
+bool qr_EncodeBinary(Span<const uint8_t> data, qr_RawCode *out_code);
+
+void qr_ExportPng(const qr_RawCode &qr, int border, StreamWriter *out_st);
+void qr_ExportPng(const qr_RawCode &qr, int border, HeapArray<uint8_t> *out_png);
+void qr_ExportBlocks(const qr_RawCode &qr, bool ansi, int border, StreamWriter *out_st);
 
 }

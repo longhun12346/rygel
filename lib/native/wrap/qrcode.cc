@@ -7,12 +7,13 @@
 
 namespace K {
 
-template <typename T>
-bool EncodeText(Span<const char> text, int border, T func, StreamWriter *out_st)
+static_assert(qrcodegen_BUFFER_LEN_MAX <= K_SIZE(qr_RawCode::bits));
+static_assert(qrcodegen_BUFFER_LEN_MAX < Kibibytes(8));
+
+bool qr_EncodeText(Span<const char> text, qr_RawCode *out_qr)
 {
     uint8_t qr[qrcodegen_BUFFER_LEN_MAX];
     uint8_t tmp[qrcodegen_BUFFER_LEN_MAX];
-    static_assert(qrcodegen_BUFFER_LEN_MAX < Kibibytes(8));
 
     if (text.len > K_SIZE(tmp)) [[unlikely]] {
         LogError("Cannot encode %1 bytes as QR code (max = %2)", text.len, K_SIZE(tmp));
@@ -26,18 +27,16 @@ bool EncodeText(Span<const char> text, int border, T func, StreamWriter *out_st)
         return false;
     }
 
-    if (!func(qr, border, out_st))
-        return false;
+    out_qr->size = qrcodegen_getSize(qr);
+    MemCpy(out_qr->bits, qr + 1, K_SIZE(qr) - 1);
 
     return true;
 }
 
-template <typename T>
-bool EncodeBinary(Span<const uint8_t> data, int border, T func, StreamWriter *out_st)
+bool qr_EncodeBinary(Span<const uint8_t> data, qr_RawCode *out_qr)
 {
     uint8_t qr[qrcodegen_BUFFER_LEN_MAX];
     uint8_t tmp[qrcodegen_BUFFER_LEN_MAX];
-    static_assert(qrcodegen_BUFFER_LEN_MAX < Kibibytes(8));
 
     if (data.len > K_SIZE(tmp)) [[unlikely]] {
         LogError("Cannot encode %1 bytes as QR code (max = %2)", data.len, K_SIZE(tmp));
@@ -52,13 +51,13 @@ bool EncodeBinary(Span<const uint8_t> data, int border, T func, StreamWriter *ou
         return false;
     }
 
-    if (!func(qr, border, out_st))
-        return false;
+    out_qr->size = qrcodegen_getSize(qr);
+    MemCpy(out_qr->bits, qr + 1, K_SIZE(qr) - 1);
 
     return true;
 }
 
-static bool GeneratePNG(const uint8_t qr[qrcodegen_BUFFER_LEN_MAX], int border, StreamWriter *out_st)
+void qr_ExportPng(const qr_RawCode &qr, int border, StreamWriter *out_st)
 {
     // Account for scanline byte
     static const int MaxSize = (int)Kibibytes(2) - 1;
@@ -66,13 +65,10 @@ static bool GeneratePNG(const uint8_t qr[qrcodegen_BUFFER_LEN_MAX], int border, 
     static const uint8_t PngHeader[] = { 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A };
     static const uint8_t PngFooter[] = { 0, 0, 0, 0, 'I', 'E', 'N', 'D', 0xAE, 0x42, 0x60, 0x82 };
 
-    int size = qrcodegen_getSize(qr) + 2 * border / 4;
-    int size4 = qrcodegen_getSize(qr) * 4 + 2 * border;
+    int size = qr.size + 2 * border / 4;
+    int size4 = qr.size * 4 + 2 * border;
 
-    if (size > MaxSize) [[unlikely]] {
-        LogError("Excessive QR code image size");
-        return false;
-    }
+    K_ASSERT(size <= MaxSize);
 
     out_st->Write(PngHeader);
 
@@ -132,8 +128,8 @@ static bool GeneratePNG(const uint8_t qr[qrcodegen_BUFFER_LEN_MAX], int border, 
             buf.Append((uint8_t)0); // Scanline filter
 
             for (int x = 0; x < size; x += 2) {
-                uint8_t byte = (qrcodegen_getModule(qr, x + 0 - border / 4, y / 4 - border / 4) * 0xF0) |
-                               (qrcodegen_getModule(qr, x + 1 - border / 4, y / 4 - border / 4) * 0x0F);
+                uint8_t byte = (qr.GetValue(x + 0 - border / 4, y / 4 - border / 4) * 0xF0) |
+                               (qr.GetValue(x + 1 - border / 4, y / 4 - border / 4) * 0x0F);
                 buf.Append(~byte);
             }
 
@@ -160,30 +156,26 @@ static bool GeneratePNG(const uint8_t qr[qrcodegen_BUFFER_LEN_MAX], int border, 
 
     // End image (IEND)
     out_st->Write(PngFooter);
-
-    return true;
 }
 
-bool qr_EncodeTextToPng(Span<const char> text, int border, StreamWriter *out_st)
+void qr_ExportPng(const qr_RawCode &qr, int border, HeapArray<uint8_t> *out_png)
 {
-    return EncodeText(text, border, GeneratePNG, out_st);
+    StreamWriter st(out_png, "<png>");
+    qr_ExportPng(qr, border, &st);
 }
 
-bool qr_EncodeBinaryToPng(Span<const uint8_t> data, int border, StreamWriter *out_st)
+void qr_ExportBlocks(const qr_RawCode &qr, bool ansi, int border, StreamWriter *out_st)
 {
-    return EncodeBinary(data, border, GeneratePNG, out_st);
-}
+    K_ASSERT(border % 2 == 0);
 
-static void GenerateUnicodeBlocks(const uint8_t qr[qrcodegen_BUFFER_LEN_MAX], bool ansi, int border, StreamWriter *out_st)
-{
-    int size = qrcodegen_getSize(qr) + 2 * border;
+    int size = qr.size + 2 * border;
 
     for (int y = 0; y < size; y += 2) {
         out_st->Write(ansi ? "\x1B[40;37m" : "");
 
         for (int x = 0; x < size; x++) {
-            int combined = (qrcodegen_getModule(qr, x - border, y - border) << 0) |
-                           (qrcodegen_getModule(qr, x - border, y - border + 1) << 1);
+            int combined = (qr.GetValue(x - border, y - border) << 0) |
+                           (qr.GetValue(x - border, y - border + 1) << 1);
 
             switch (combined) {
                 case 0: { out_st->Write("\u2588"); } break;
@@ -195,26 +187,6 @@ static void GenerateUnicodeBlocks(const uint8_t qr[qrcodegen_BUFFER_LEN_MAX], bo
 
         out_st->Write(ansi ? "\x1B[0m\n" : "\n");
     }
-}
-
-bool qr_EncodeTextToBlocks(Span<const char> text, bool ansi, int border, StreamWriter *out_st)
-{
-    K_ASSERT(border % 2 == 0);
-
-    return EncodeText(text, border, [&](const uint8_t qr[qrcodegen_BUFFER_LEN_MAX], int border, StreamWriter *out_st) {
-        GenerateUnicodeBlocks(qr, ansi, border, out_st);
-        return true;
-    }, out_st);
-}
-
-bool qr_EncodeBinaryToBlocks(Span<const uint8_t> data, bool ansi, int border, StreamWriter *out_st)
-{
-    K_ASSERT(border % 2 == 0);
-
-    return EncodeBinary(data, border, [&](const uint8_t qr[qrcodegen_BUFFER_LEN_MAX], int border, StreamWriter *out_st) {
-        GenerateUnicodeBlocks(qr, ansi, border, out_st);
-        return true;
-    }, out_st);
 }
 
 }
