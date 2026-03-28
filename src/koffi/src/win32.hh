@@ -121,4 +121,6 @@ void *LoadWindowsLibrary(Napi::Env env, Span<const char> path); // Returns HANDL
 int GetSelfMachine();
 int GetDllMachine(const wchar_t *filename);
 
+extern "C" int __cdecl SehHandler(void *ptr, void *, void *ctx, void *);
+
 }

@@ -180,6 +180,19 @@ int GetDllMachine(const wchar_t *filename)
     return GetFileMachine(h, true);
 }
 
+extern "C" int __cdecl SehHandler(void *ptr, void *, void *ctx, void *)
+{
+    EXCEPTION_RECORD *rec = (EXCEPTION_RECORD *)ptr;
+
+    if (!(rec->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND))) {
+        EXCEPTION_POINTERS ep = { rec, (CONTEXT *)ctx };
+        UnhandledExceptionFilter(&ep);
+        ExitProcess(rec->ExceptionCode);
+    }
+
+    return ExceptionContinueSearch;
+}
+
 }
 
 #endif
