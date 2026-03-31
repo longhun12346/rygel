@@ -9,6 +9,7 @@
 #ifndef PSA_EXERCISE_KEY_H
 #define PSA_EXERCISE_KEY_H
 
+#include "build_info.h"
 #include "test/helpers.h"
 #include "test/psa_crypto_helpers.h"
 

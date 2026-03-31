@@ -13,12 +13,7 @@
 #ifndef TEST_HELPERS_H
 #define TEST_HELPERS_H
 
-/* Most fields of publicly available structs are private and are wrapped with
- * MBEDTLS_PRIVATE macro. This define allows tests to access the private fields
- * directly (without using the MBEDTLS_PRIVATE wrapper). */
-#define MBEDTLS_ALLOW_PRIVATE_ACCESS
-
-#include "mbedtls/build_info.h"
+#include "build_info.h"
 
 #if defined(__SANITIZE_ADDRESS__) /* gcc -fsanitize=address */
 #  define MBEDTLS_TEST_HAVE_ASAN
@@ -152,6 +147,25 @@ void mbedtls_test_get_line1(char *line);
  */
 void mbedtls_test_get_line2(char *line);
 
+/**
+ * \brief           Get a copy of the test result information.
+ *
+ * \param[out] out  On output, contains a copy of the current test info.
+ */
+void mbedtls_test_info_save(mbedtls_test_info_t *out);
+
+/**
+ * \brief           Overwrite the test result information.
+ *                  This is intended for some unusual scenarios.
+ *                  You probably shouldn't use this in a test function.
+ *
+ * \param[in] replacement
+ *                  The test info to use instead of the current one.
+ *                  The function copies the data, so the pointer does
+ *                  not need to be valid after this function returns.
+ */
+void mbedtls_test_info_overwrite(const mbedtls_test_info_t *replacement);
+
 #if defined(MBEDTLS_TEST_MUTEX_USAGE)
 /**
  * \brief           Get the current mutex usage error message
@@ -239,6 +253,19 @@ void mbedtls_test_platform_teardown(void);
  * \param filename  Filename where the failure originated.
  */
 void mbedtls_test_fail(const char *test, int line_no, const char *filename);
+
+/**
+ * \brief           Record the current test case as a failure
+ *                  and show the value of errno.
+ *
+ *                  This function is usually called via #TEST_ASSERT_ERRNO.
+ *
+ * \param test      Description of the failure or assertion that failed. This
+ *                  MUST be a string literal.
+ * \param line_no   Line number where the failure originated.
+ * \param filename  Filename where the failure originated.
+ */
+void mbedtls_test_fail_errno(const char *test, int line_no, const char *filename);
 
 /**
  * \brief           Record the current test case as skipped.

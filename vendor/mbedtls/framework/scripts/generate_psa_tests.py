@@ -253,6 +253,9 @@ class OpFail:
         arguments = [] # type: List[str]
         if kt:
             bits = kt.sizes_to_test()[0]
+            if pretty_alg == "XTS" and kt.can_do(alg):
+                # XTS mode uses double-size keys for the underlying block cipher
+                bits = bits * 2
             tc.set_key_bits(bits)
             tc.set_key_pair_usage(['IMPORT'])
             key_material = kt.key_material(bits)
@@ -338,23 +341,31 @@ class OpFail:
     def test_cases_for_algorithm(
             self,
             alg: crypto_knowledge.Algorithm,
+            categories: Iterable[crypto_knowledge.AlgorithmCategory]
     ) -> Iterator[test_case.TestCase]:
         """Generate operation failure test cases for the specified algorithm."""
-        for category in crypto_knowledge.AlgorithmCategory:
-            if category == crypto_knowledge.AlgorithmCategory.PAKE:
-                # PAKE operations are not implemented yet
-                pass
-            elif category.requires_key():
+        for category in categories:
+            if category.requires_key():
                 yield from self.one_key_test_cases(alg, category)
             else:
                 yield from self.no_key_test_cases(alg, category)
 
     def all_test_cases(self) -> Iterator[test_case.TestCase]:
         """Generate all test cases for operations that must fail."""
-        algorithms = sorted(self.constructors.algorithms)
-        for expr in self.constructors.generate_expressions(algorithms):
-            alg = crypto_knowledge.Algorithm(expr)
-            yield from self.test_cases_for_algorithm(alg)
+        algorithm_constructors = sorted(self.constructors.algorithms)
+        algorithms = [crypto_knowledge.Algorithm(alg)
+                      for alg in self.constructors.generate_expressions(
+                          algorithm_constructors)]
+        supported_categories = set()
+        for alg in algorithms:
+            supported_categories.add(alg.category)
+        # We don't have a pake_fail test function yet.
+        # https://github.com/Mbed-TLS/mbedtls-framework/issues/263
+        supported_categories.remove(crypto_knowledge.AlgorithmCategory.PAKE)
+        categories = sorted(supported_categories, key=lambda cat: cat.value)
+        assert categories # sanity check: at least one category detected
+        for alg in algorithms:
+            yield from self.test_cases_for_algorithm(alg, categories)
 
 
 class StorageKey(psa_storage.Key):
@@ -638,6 +649,13 @@ class StorageFormat:
             compatible_algorithms = [alg for alg in all_algorithms
                                      if kt.can_do(alg)]
             for alg in compatible_algorithms:
+                if alg.expression == 'PSA_ALG_XTS':
+                    # XTS mode uses double-size keys for the underlying block cipher
+                    # XTS does not use 192-bit keys
+                    if bits != 192:
+                        bits = bits * 2
+                    else:
+                        continue
                 yield self.key_for_type_and_alg(kt, bits, alg)
 
     def all_keys_for_types(self) -> Iterator[StorageTestData]:
