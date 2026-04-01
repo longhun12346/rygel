@@ -13,6 +13,8 @@
 .global ForwardCallFX
 .global ForwardCallDX
 
+.global SehHandler
+
 # Copy function pointer to RAX, in order to save it through argument forwarding.
 # Also make a copy of the SP to CallData::old_sp because the callback system might need it.
 # Save RSP in RBX (non-volatile), and use carefully assembled stack provided by caller.
@@ -23,16 +25,6 @@
     movq %rsp, %rbp
     movq %rsp, (%r8)
     movq %rdx, %rsp
-.endm
-
-# Call native function.
-# Once done, restore normal stack pointer and return.
-# The return value is passed untouched through RAX or XMM0.
-.macro epilogue
-    call *%rax
-    movq %rbp, %rsp
-    pop %rbp
-    ret
 .endm
 
 # Prepare integer argument registers from array passed by caller.
@@ -51,38 +43,55 @@
     movsd 0(%rdx), %xmm0
 .endm
 
+# CallNative is a minimal wrapper around the native function call.
+# Its frame lives entirely on the custom stack, so its EstablisherFrame passes
+# the TEB stack bounds check. This ensures that SehHandler is found by
+# RtlDispatchException before it tries to cross back to the original stack
+# (through ForwardCall*), which would fail the bounds check and terminate.
+# After the native call returns, CallNative restores the original stack via
+# RBP (non-volatile, preserved by native) and returns directly to the C++ caller.
+CallNative:
+    .seh_proc CallNative
+    .seh_handler SehHandler, @except
+    .seh_endprologue
+    call *%rax
+    movq %rbp, %rsp
+    pop %rbp
+    ret
+    .seh_endproc
+
 ForwardCallG:
     prologue
     forward_gpr
-    epilogue
+    jmp CallNative
 
 ForwardCallF:
     prologue
     forward_gpr
-    epilogue
+    jmp CallNative
 
 ForwardCallD:
     prologue
     forward_gpr
-    epilogue
+    jmp CallNative
 
 ForwardCallGX:
     prologue
     forward_xmm
     forward_gpr
-    epilogue
+    jmp CallNative
 
 ForwardCallFX:
     prologue
     forward_xmm
     forward_gpr
-    epilogue
+    jmp CallNative
 
 ForwardCallDX:
     prologue
     forward_xmm
     forward_gpr
-    epilogue
+    jmp CallNative
 
 # Callbacks
 # ----------------------------
