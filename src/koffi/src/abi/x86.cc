@@ -323,7 +323,7 @@ Napi::Value RunLoop(CallData *call, napi_value *args, uint32_t *base, const AbiI
             teb->ExceptionList = seh; \
             teb->LastErrorValue = call->instance->last_error; \
              \
-            ADJUST_TEB(teb, call->mem->stack.ptr, call->mem->stack.end()); \
+            ADJUST_TEB(teb, call->mem->stack0.ptr, call->mem->stack0.end()); \
              \
             return (Expr); \
         }()
