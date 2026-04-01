@@ -377,6 +377,7 @@ static void HandleRequest(http_IO *io)
                                                          "style-src 'self' 'unsafe-inline'; "
                                                          "style-src-elem 'self'; "
                                                          "style-src-attr 'self' 'unsafe-inline'; "
+                                                         "connect-src 'self' data:; "
                                                          "img-src 'self' data:; "
                                                          "frame-ancestors 'none'; "
                                                          "form-action 'none'");
@@ -432,6 +433,7 @@ static void HandleRequest(http_IO *io)
                                                         "style-src 'self' 'unsafe-inline'; "
                                                         "style-src-elem 'self' 'nonce-%1'; "
                                                         "style-src-attr 'self' 'unsafe-inline'; "
+                                                        "connect-src 'self' data:; "
                                                         "img-src 'self' data:; "
                                                         "frame-ancestors 'none'; "
                                                         "form-action 'none'", nonce);
