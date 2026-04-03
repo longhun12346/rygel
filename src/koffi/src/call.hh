@@ -91,7 +91,7 @@ public:
 #undef INLINE_IF_UNITY
 
     void Relay(Size idx, uint8_t *own_sp, uint8_t *caller_sp, bool switch_stack, BackRegisters *out_reg);
-    void RelayAsync(Size idx, uint8_t *own_sp, uint8_t *caller_sp, bool dispose, BackRegisters *out_reg);
+    void RelayAsync(Size idx, uint8_t *own_sp, uint8_t *caller_sp, BackRegisters *out_reg);
 
     void DumpForward(const FunctionInfo *func) const;
 

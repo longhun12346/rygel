@@ -12,7 +12,6 @@ namespace K {
 
 struct RelayContext {
     CallData *call;
-    bool dispose;
 
     Size idx;
     uint8_t *own_sp;
@@ -75,14 +74,13 @@ void CallData::Dispose()
     instance = nullptr;
 }
 
-void CallData::RelayAsync(Size idx, uint8_t *own_sp, uint8_t *caller_sp, bool dispose, BackRegisters *out_reg)
+void CallData::RelayAsync(Size idx, uint8_t *own_sp, uint8_t *caller_sp, BackRegisters *out_reg)
 {
     // JS/V8 is single-threaded, and runs on main_thread_id. Forward the call
     // to the JS event loop.
 
     RelayContext ctx = {
         .call = this,
-        .dispose = dispose,
         .idx = idx,
         .own_sp = own_sp,
         .caller_sp = caller_sp,
@@ -1301,12 +1299,10 @@ void PerformAsyncRelay(napi_env, napi_value, void *, void *udata)
 
     call->Relay(ctx->idx, ctx->own_sp, ctx->caller_sp, false, ctx->out_reg);
 
-    if (ctx->dispose) {
-        // This CallData was created artificially just to perform the callback. Which means the
-        // creator may not run on the main thread, and cannot properly destroy it, because some
-        // members are managed by Node.
-        call->Dispose();
-    }
+    // This CallData was created artificially just to perform the callback. Which means the
+    // creator may not run on the main thread, and cannot properly destroy it, because some
+    // members are managed by Node.
+    call->Dispose();
 
     // We're done!
     std::lock_guard<std::mutex> lock(ctx->mutex);
