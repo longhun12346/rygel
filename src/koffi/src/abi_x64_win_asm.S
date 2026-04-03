@@ -97,7 +97,8 @@ ForwardCallXD:
 # ----------------------------
 
 .global RelayCallback
-.global CallSwitchStack
+.global SwitchAndRelay
+.global RelayDirect
 
 # First, make a copy of the GPR argument registers (rcx, rdx, r8, r9).
 # Then call the C function RelayCallback with the following arguments:
@@ -113,8 +114,6 @@ ForwardCallXD:
     movq %r9, 56(%rsp)
     movq $\id, %rcx
     leaq 32(%rsp), %rdx
-    leaq 160(%rsp), %r8
-    leaq 96(%rsp), %r9
     call RelayCallback
     movq 96(%rsp), %rax
     addq $120, %rsp
@@ -135,8 +134,6 @@ ForwardCallXD:
     movsd %xmm3, 88(%rsp)
     movq $\id, %rcx
     leaq 32(%rsp), %rdx
-    leaq 160(%rsp), %r8
-    leaq 96(%rsp), %r9
     call RelayCallback
     movq 96(%rsp), %rax
     movsd 104(%rsp), %xmm0
@@ -149,18 +146,17 @@ ForwardCallXD:
 # probably misdetect this as a "stack overflow". We have to restore the old
 # stack pointer, call Node.js/V8 and go back to ours.
 # The first three parameters (rcx, rdx, r8) are passed through untouched.
-CallSwitchStack:
+SwitchAndRelay:
     endbr64
     push %rbp
     movq %rsp, %rbp
-    movq 56(%rsp), %rax
     movq %rsp, %r10
     movq 48(%rsp), %r11
     subq 0(%r11), %r10
     andq $-16, %r10
     movq %r10, 8(%r11)
     leaq -32(%r9), %rsp
-    call *%rax
+    call RelayDirect
     movq %rbp, %rsp
     pop %rbp
     ret

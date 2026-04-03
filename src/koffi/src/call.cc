@@ -14,9 +14,7 @@ struct RelayContext {
     CallData *call;
 
     Size idx;
-    uint8_t *own_sp;
-    uint8_t *caller_sp;
-    BackRegisters *out_reg;
+    uint8_t *sp;
 
     std::mutex mutex = {};
     std::condition_variable cv = {};
@@ -74,7 +72,7 @@ void CallData::Dispose()
     instance = nullptr;
 }
 
-void CallData::RelayAsync(Size idx, uint8_t *own_sp, uint8_t *caller_sp, BackRegisters *out_reg)
+void CallData::RelayAsync(Size idx, uint8_t *sp)
 {
     // JS/V8 is single-threaded, and runs on main_thread_id. Forward the call
     // to the JS event loop.
@@ -82,9 +80,7 @@ void CallData::RelayAsync(Size idx, uint8_t *own_sp, uint8_t *caller_sp, BackReg
     RelayContext ctx = {
         .call = this,
         .idx = idx,
-        .own_sp = own_sp,
-        .caller_sp = caller_sp,
-        .out_reg = out_reg
+        .sp = sp
     };
 
     napi_call_threadsafe_function(instance->broker, &ctx, napi_tsfn_blocking);
@@ -1297,7 +1293,7 @@ void PerformAsyncRelay(napi_env, napi_value, void *, void *udata)
     RelayContext *ctx = (RelayContext *)udata;
     CallData *call = ctx->call;
 
-    call->Relay(ctx->idx, ctx->own_sp, ctx->caller_sp, false, ctx->out_reg);
+    call->Relay(ctx->idx, ctx->sp);
 
     // This CallData was created artificially just to perform the callback. Which means the
     // creator may not run on the main thread, and cannot properly destroy it, because some

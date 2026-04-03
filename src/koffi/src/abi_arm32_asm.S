@@ -91,7 +91,8 @@ ForwardCallXDDDD:
 # ----------------------------
 
 .global RelayCallback
-.global CallSwitchStack
+.global SwitchAndRelay
+.global RelayDirect
 
 # First, make a copy of the GPR argument registers (r0 to r7).
 # Then call the C function RelayCallback with the following arguments:
@@ -107,11 +108,9 @@ ForwardCallXDDDD:
     sub sp, sp, #120
     .cfi_def_cfa sp, 128
     add r12, sp, 64
-    stmia r12!, {r0-r3}
+    stmia r12, {r0-r3}
     mov r0, \id
     mov r1, sp
-    add r2, sp, #128
-    mov r3, r12
     bl RelayCallback
     add sp, sp, #80
     ldmia sp!, {r0-r1}
@@ -136,11 +135,9 @@ ForwardCallXDDDD:
     .cfi_def_cfa sp, 128
     mov r12, sp
     vstmia r12!, {d0-d7}
-    stmia r12!, {r0-r3}
+    stmia r12, {r0-r3}
     mov r0, \id
     mov r1, sp
-    add r2, sp, #128
-    mov r3, r12
     bl RelayCallback
     add sp, sp, #80
     ldmia sp!, {r0-r1}
@@ -159,7 +156,7 @@ ForwardCallXDDDD:
 # probably misdetect this as a "stack overflow". We have to restore the old
 # stack pointer, call Node.js/V8 and go back to ours.
 # The first three parameters (r0, r1, r2) are passed through untouched.
-CallSwitchStack:
+SwitchAndRelay:
     .cfi_startproc
     push {fp, lr}
     .cfi_def_cfa sp, 8
@@ -173,9 +170,8 @@ CallSwitchStack:
     sub r5, sp, r5
     and r5, r5, #-16
     str r5, [r4, 4]
-    ldr r4, [sp, 20]
     mov sp, r3
-    blx r4
+    bl RelayDirect
     mov sp, fp
     .cfi_def_cfa sp, 16
     pop {r4, r5}

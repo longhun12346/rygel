@@ -108,7 +108,8 @@ ForwardCallXD endp
 ; ----------------------------
 
 extern RelayCallback : PROC
-public CallSwitchStack
+public SwitchAndRelay
+extern RelayDirect : PROC
 
 ; First, make a copy of the GPR argument registers (rcx, rdx, r8, r9).
 ; Then call the C function RelayCallback with the following arguments:
@@ -126,8 +127,6 @@ trampoline macro ID
     mov qword ptr [rsp+56], r9
     mov rcx, ID
     lea rdx, qword ptr [rsp+32]
-    lea r8, qword ptr [rsp+160]
-    lea r9, qword ptr [rsp+96]
     call RelayCallback
     mov rax, qword ptr [rsp+96]
     add rsp, 120
@@ -150,8 +149,6 @@ trampoline_vec macro ID
     movsd qword ptr [rsp+88], xmm3
     mov rcx, ID
     lea rdx, qword ptr [rsp+32]
-    lea r8, qword ptr [rsp+160]
-    lea r9, qword ptr [rsp+96]
     call RelayCallback
     mov rax, qword ptr [rsp+96]
     movsd xmm0, qword ptr [rsp+104]
@@ -164,25 +161,24 @@ endm
 ; probably misdetect this as a "stack overflow". We have to restore the old
 ; stack pointer, call Node.js/V8 and go back to ours.
 ; The first three parameters (rcx, rdx, r8) are passed through untouched.
-CallSwitchStack proc frame
+SwitchAndRelay proc frame
     endbr64
     push rbp
     .pushreg rbp
     mov rbp, rsp
     .setframe rbp, 0
     .endprolog
-    mov rax, qword ptr [rsp+56]
     mov r10, rsp
     mov r11, qword ptr [rsp+48]
     sub r10, qword ptr [r11+0]
     and r10, -16
     mov qword ptr [r11+8], r10
     lea rsp, [r9-32]
-    call rax
+    call RelayDirect
     mov rsp, rbp
     pop rbp
     ret
-CallSwitchStack endp
+SwitchAndRelay endp
 
 ; Trampolines
 ; ----------------------------
