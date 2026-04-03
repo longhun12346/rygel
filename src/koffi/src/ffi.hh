@@ -85,7 +85,7 @@ static const char *const PrimitiveKindNames[] = {
 struct TypeInfo;
 struct RecordMember;
 struct FunctionInfo;
-class CallData;
+struct CallData;
 
 typedef void DisposeFunc (Napi::Env env, const TypeInfo *type, const void *ptr);
 

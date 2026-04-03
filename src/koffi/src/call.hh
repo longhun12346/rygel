@@ -17,7 +17,7 @@ struct BackRegisters;
 
 // I'm not sure why the alignas(8), because alignof(CallData) is 8 without it.
 // But on Windows i386, without it, the alignment may not be correct (compiler bug?).
-class alignas(8) CallData {
+struct alignas(8) CallData {
     struct OutArgument {
         enum class Kind {
             Array,
@@ -66,7 +66,7 @@ class alignas(8) CallData {
     LocalArray<int16_t, 16> used_trampolines;
     HeapArray<OutArgument> out_arguments;
 
-    BlockAllocator call_alloc;
+    BlockAllocator alloc;
 
 public:
     CallData(Napi::Env env, InstanceData *instance, InstanceMemory *mem);
@@ -111,11 +111,6 @@ public:
 
     void *ReserveTrampoline(const FunctionInfo *proto, Napi::Function func);
 
-    Napi::Env GetEnv() { return env; }
-    InstanceData *GetInstance() { return instance; }
-    BlockAllocator *GetAllocator() { return &call_alloc; }
-
-private:
     template <typename T>
     bool AllocStack(Size size, Size align, T **out_ptr);
     template <typename T = uint8_t>
@@ -170,7 +165,7 @@ inline T *CallData::AllocHeap(Size size, Size align)
         int flags = 0;
 #endif
 
-        ptr = (uint8_t *)AllocateRaw(&call_alloc, size + align, flags);
+        ptr = (uint8_t *)AllocateRaw(&alloc, size + align, flags);
         ptr = AlignUp(ptr, align);
 
         return ptr;

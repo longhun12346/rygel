@@ -1695,16 +1695,11 @@ extern "C" void RelayCallback(Size idx, uint8_t *own_sp, uint8_t *caller_sp, Bac
     CallData *call = exec_call;
 
     // Try the fast path first: we are on the main thread and we are running a native call through Koffi
-    if (call) {
-        Napi::Env env = call->GetEnv();
-        InstanceData *instance = call->GetInstance();
+    if (call && std::this_thread::get_id() == call->instance->main_thread_id) {
+        Napi::HandleScope scope(call->env);
+        call->Relay(idx, own_sp, caller_sp, true, out_reg);
 
-        if (std::this_thread::get_id() == instance->main_thread_id) {
-            Napi::HandleScope scope(env);
-            call->Relay(idx, own_sp, caller_sp, true, out_reg);
-
-            return;
-        }
+        return;
     }
 
     // Otherwise, we need to allocate memory to perform the callback.
