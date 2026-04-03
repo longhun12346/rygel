@@ -91,8 +91,7 @@ public:
 #undef INLINE_IF_UNITY
 
     void Relay(Size idx, uint8_t *own_sp, uint8_t *caller_sp, bool switch_stack, BackRegisters *out_reg);
-    void RelaySafe(Size idx, uint8_t *own_sp, uint8_t *caller_sp, bool outside_call, BackRegisters *out_reg);
-    static void RelayAsync(napi_env, napi_value, void *, void *udata);
+    void RelayAsync(Size idx, uint8_t *own_sp, uint8_t *caller_sp, bool dispose, BackRegisters *out_reg);
 
     void DumpForward(const FunctionInfo *func) const;
 
@@ -112,6 +111,8 @@ public:
 
     void *ReserveTrampoline(const FunctionInfo *proto, Napi::Function func);
 
+    Napi::Env GetEnv() { return env; }
+    InstanceData *GetInstance() { return instance; }
     BlockAllocator *GetAllocator() { return &call_alloc; }
 
 private:
@@ -175,6 +176,8 @@ inline T *CallData::AllocHeap(Size size, Size align)
         return ptr;
     }
 }
+
+void PerformAsyncRelay(napi_env env, napi_value callback, void *ctx, void *udata);
 
 void *GetTrampoline(int16_t idx, const FunctionInfo *proto);
 
