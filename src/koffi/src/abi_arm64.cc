@@ -286,7 +286,7 @@ bool CallData::Prepare(const FunctionInfo *func, const Napi::CallbackInfo &info)
             if (param.gpr_count) [[likely]] { \
                 *(gpr_ptr++) = (uint64_t)v; \
             } else { \
-                args_ptr = AlignUp(args_ptr, param.type->align); \
+                args_ptr = AlignUp(args_ptr, param.variadic ? 8 : param.type->align); \
                 *args_ptr = (uint64_t)v; \
                 args_ptr = (uint64_t *)((uint8_t *)args_ptr + param.type->size); \
             } \
@@ -303,7 +303,7 @@ bool CallData::Prepare(const FunctionInfo *func, const Napi::CallbackInfo &info)
             if (param.gpr_count) [[likely]] { \
                 *(gpr_ptr++) = (uint64_t)ReverseBytes(v); \
             } else { \
-                args_ptr = AlignUp(args_ptr, param.type->align); \
+                args_ptr = AlignUp(args_ptr, param.variadic ? 8 : param.type->align); \
                 *args_ptr = (uint64_t)ReverseBytes(v); \
                 args_ptr = (uint64_t *)((uint8_t *)args_ptr + param.type->size); \
             } \
@@ -353,6 +353,7 @@ bool CallData::Prepare(const FunctionInfo *func, const Napi::CallbackInfo &info)
                 if (param.gpr_count) [[likely]] {
                     *(gpr_ptr++) = (uint64_t)b;
                 } else {
+                    args_ptr = AlignUp(args_ptr, param.variadic ? 8 : 1);
                     *(uint8_t *)args_ptr = b;
                     args_ptr = (uint64_t *)((uint8_t *)args_ptr + 1);
                 }
@@ -484,7 +485,7 @@ bool CallData::Prepare(const FunctionInfo *func, const Napi::CallbackInfo &info)
 #endif
                 } else {
 #if defined(__APPLE__)
-                    args_ptr = AlignUp(args_ptr, 4);
+                    args_ptr = AlignUp(args_ptr, param.variadic ? 8 : 4);
                     *(float *)args_ptr = f;
                     args_ptr = (uint64_t *)((uint8_t *)args_ptr + 4);
 #else
