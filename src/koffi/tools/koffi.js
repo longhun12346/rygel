@@ -345,7 +345,7 @@ async function compile(debug = false) {
         if (runner.isIgnored(machine))
             return;
 
-        let cmd = build.info.build + (debug ? ' --debug' : ' --config release');
+        let cmd = build.info.build + (debug ? ' --debug' : ' --release');
         let cwd = build.info.directory + '/src/koffi';
 
         let start = process.hrtime.bigint();
@@ -467,7 +467,7 @@ async function test(debug = false) {
             return;
 
         let commands = {
-            'Build tests': build.test.build + (debug ? ' --debug' : ' --config release'),
+            'Build tests': build.test.build + (debug ? ' --debug' : ' --release'),
             ...build.test.commands
         };
 
