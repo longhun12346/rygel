@@ -255,8 +255,6 @@ async function build() {
             'lib/native/base',
             'src/core',
             'src/cnoke',
-            'src/koffi/cmake',
-            'src/koffi/examples',
             'src/koffi/src',
             'src/koffi/CHANGELOG.md',
             'src/koffi/CMakeLists.txt',
@@ -266,7 +264,11 @@ async function build() {
             'src/koffi/LICENSE.txt',
             'src/koffi/package.json',
             'src/koffi/README.md',
-            'vendor/node-addon-api',
+            'vendor/node-addon-api/napi.h',
+            'vendor/node-addon-api/napi-inl.h',
+            'vendor/node-addon-api/napi-inl.deprecated.h',
+            'vendor/node-addon-api/README.md',
+            'vendor/node-addon-api/LICENSE.md',
             'vendor/node-api-headers',
             'web/koffi.dev'
         ]));
@@ -312,8 +314,9 @@ async function build() {
         fs.renameSync(dist_dir + '/src/koffi/README.md', dist_dir + '/README.md');
         fs.renameSync(dist_dir + '/src/koffi/LICENSE.txt', dist_dir + '/LICENSE.txt');
         fs.renameSync(dist_dir + '/src/koffi/CHANGELOG.md', dist_dir + '/CHANGELOG.md');
-        fs.renameSync(dist_dir + '/web/koffi.dev', dist_dir + '/doc');
-        fs.rmdirSync(dist_dir + '/web');
+        fs.renameSync(dist_dir + '/web/koffi.dev/pages', dist_dir + '/doc');
+        fs.rmSync(dist_dir + '/doc/404.md');
+        fs.rmSync(dist_dir + '/web', { recursive: true });
     }
 
     console.log('>> Test prebuild');
