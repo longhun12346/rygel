@@ -826,15 +826,8 @@ static Napi::Value CreateDisposableType(const Napi::CallbackInfo &info)
     type->dispose_ref = Napi::Persistent(dispose_func);
 
     // If the insert succeeds, we cannot fail anymore
-    if (named) {
-        bool inserted;
-        instance->types_map.InsertOrGet(type->name, type, &inserted);
-
-        if (!inserted) {
-            ThrowError<Napi::Error>(env, "Duplicate type name '%1'", type->name);
-            return env.Null();
-        }
-    }
+    if (named && !MapType(env, instance, type, type->name))
+        return env.Null();
     err_guard.Disable();
 
     return WrapType(env, type);
@@ -1141,7 +1134,12 @@ static Napi::Value CreateFunctionType(const Napi::CallbackInfo &info)
     InstanceData *instance = env.GetInstanceData<InstanceData>();
 
     FunctionInfo *func = instance->callbacks.AppendDefault();
-    K_DEFER_N(err_guard) { instance->callbacks.RemoveLast(1); };
+    TypeInfo *type = instance->types.AppendDefault();
+
+    K_DEFER_N(err_guard) {
+        instance->callbacks.RemoveLast(1);
+        instance->types.RemoveLast(1);
+    };
 
     if (info.Length() >= 2) {
         if (!ParseClassicFunction(info, false, func))
@@ -1175,15 +1173,6 @@ static Napi::Value CreateFunctionType(const Napi::CallbackInfo &info)
     }
     func->required_parameters += 2;
 
-    // We cannot fail after this check
-    if (named && instance->types_map.Find(func->name)) {
-        ThrowError<Napi::Error>(env, "Duplicate type name '%1'", func->name);
-        return env.Null();
-    }
-    err_guard.Disable();
-
-    TypeInfo *type = instance->types.AppendDefault();
-
     type->name = func->name;
 
     type->primitive = PrimitiveKind::Prototype;
@@ -1191,7 +1180,10 @@ static Napi::Value CreateFunctionType(const Napi::CallbackInfo &info)
     type->size = K_SIZE(void *);
     type->ref.proto = func;
 
-    instance->types_map.Set(type->name, type);
+    // If the insert succeeds, we cannot fail anymore
+    if (named && !MapType(env, instance, type, type->name))
+        return env.Null();
+    err_guard.Disable();
 
     return WrapType(env, type);
 }
