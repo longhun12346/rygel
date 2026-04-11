@@ -840,6 +840,11 @@ static inline bool GetExternalPointer(Napi::Env env, Napi::Value value, void **o
     if (IsNullOrUndefined(value)) {
         *out_ptr = 0;
         return true;
+    } else if (IsRawBuffer(value)) {
+        Span<uint8_t> buffer = GetRawBuffer(value);
+
+        *out_ptr = buffer.ptr;
+        return true;
     } else if (value.IsExternal() && !CheckValueTag(value, &TypeInfoMarker) &&
                                      !CheckValueTag(value, &CastMarker) &&
                                      !CheckValueTag(value, &MagicUnionMarker)) {
