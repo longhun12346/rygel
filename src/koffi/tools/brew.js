@@ -18,12 +18,14 @@ const ValidCommands = {
 
     test: 'Run the machines and perform the tests (default)',
     debug: 'Run the machines and perform the tests, with debug build',
-    build: 'Prepare distribution-ready NPM package directory'
+    build: 'Prepare distribution-ready NPM package directory',
+    pack: 'Create optimized package tarball for distribution'
 };
 const CommandFunctions = {
     test: test,
     debug: debug,
-    build: build
+    build: build,
+    pack: pack
 };
 
 // Globals
@@ -328,17 +330,48 @@ async function build() {
         let pkg = JSON.parse(fs.readFileSync(dist_dir + '/package.json'));
         let require_filename = path.join(dist_dir, pkg.cnoke.require);
 
-        let proc = spawnSync(process.execPath, ['-e', 'require(process.argv[1])', require_filename]);
-
-        if (proc.status !== 0) {
-            let stdout = proc.stdout.toString().trim();
-            let stderr = proc.stderr.toString().trim();
-
-            throw new Error('Failed to use prebuild:\n' + (stderr || stdout));
-        }
+        runSync('use prebuild', process.execPath, ['-e', 'require(process.argv[1])', require_filename]);
     }
 
     return dist_dir;
+}
+
+async function pack() {
+    await build();
+
+    let build_dir = root_dir + '/bin/Koffi';
+    let dist_dir = build_dir + '/package';
+    let tarball_dir = build_dir + '/tarballs';
+
+    let json = fs.readFileSync(root_dir + '/src/koffi/package.json', { encoding: 'utf-8' });
+    let version = JSON.parse(json).version;
+
+    let tgz_filename = tarball_dir + `/koffi-${version}.tgz`;
+    let tar_filename = tarball_dir + `/koffi-${version}.tar`;
+
+    fs.mkdirSync(tarball_dir, { mode: 0o755, recursive: true });
+
+    console.log('>> Create initial package');
+    {
+        let pkg = JSON.parse(fs.readFileSync(dist_dir + '/package.json'));
+        let require_filename = path.join(dist_dir, pkg.cnoke.require);
+
+        runSync('create package', 'npm', ['pack', '--pack-destination', tarball_dir], { cwd: dist_dir });
+
+        if (!fs.existsSync(tgz_filename))
+            throw new Error(`Cannot find package file '${tgz_filename}'`);
+    }
+
+    console.log('>> Maximize compression with zopfli');
+    {
+        if (spawnSync('zopfli', ['-h']).status === 0) {
+            runSync('decompress package', 'gunzip', ['-f', tgz_filename]);
+            runSync('recompress package', 'zopfli', [tar_filename]);
+            fs.renameSync(tar_filename + '.gz', tgz_filename);
+        } else {
+            console.warn('zopfli not available, skipping!');
+        }
+    }
 }
 
 async function compile(debug = false) {
@@ -511,4 +544,15 @@ async function test(debug = false) {
     }
 
     return success;
+}
+
+function runSync(action, bin, args, options = {}) {
+    let proc = spawnSync(bin, args, options);
+
+    if (proc.status !== 0) {
+        let stdout = proc.stdout.toString().trim();
+        let stderr = proc.stderr.toString().trim();
+
+        throw new Error(`Failed to ${action}:\n` + (stderr || stdout));
+    }
 }
