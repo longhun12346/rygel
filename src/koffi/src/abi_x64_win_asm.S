@@ -150,7 +150,4 @@ SwitchAndRelay:
     pop %rbp
     ret
 
-# Trampolines
-# ----------------------------
-
-#include "trampolines/gnu.inc"
+#include "gnu.inc"

@@ -21,7 +21,7 @@ struct RelayContext {
     bool done = false;
 };
 
-#include "trampolines/prototypes.inc"
+#include "prototypes.inc"
 
 CallData::CallData(Napi::Env env, InstanceData *instance, InstanceMemory *mem)
     : env(env), instance(instance),

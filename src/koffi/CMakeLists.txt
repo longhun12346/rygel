@@ -54,6 +54,15 @@ set(KOFFI_VERSION ${CMAKE_MATCH_1})
 
 set_source_files_properties(src/ffi.cc PROPERTIES COMPILE_DEFINITIONS VERSION=${KOFFI_VERSION})
 
+add_custom_command(OUTPUT trampolines/gnu.inc
+                          trampolines/armasm.inc
+                          trampolines/masm32.inc
+                          trampolines/masm64.inc
+                          trampolines/prototypes.inc
+                   COMMENT "Generate trampoline macros"
+                   COMMAND "${NODE_JS_EXECPATH}"
+                   ARGS "${CMAKE_CURRENT_SOURCE_DIR}/tools/write_trampolines.js" "${CMAKE_CURRENT_BINARY_DIR}/trampolines" 8192)
+
 set(KOFFI_SRC
     src/call.cc
     src/ffi.cc
@@ -83,8 +92,9 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 
             add_custom_command(
                 OUTPUT "${asm_object}"
-                COMMAND "${asm_compiler}" ARGS /nologo /o "${asm_object}" "${asm_source}"
-                DEPENDS "${asm_source}"
+                COMMAND "${asm_compiler}"
+                ARGS /nologo /i "${CMAKE_CURRENT_BINARY_DIR}/trampolines" /o "${asm_object}" "${asm_source}"
+                DEPENDS "${asm_source}" trampolines/armasm.inc
                 COMMENT "Assembling ${asm_source}"
             )
             set_source_files_properties("${asm_object}" PROPERTIES EXTERNAL_OBJECT TRUE)
@@ -120,8 +130,8 @@ elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
     endif()
 endif()
 
-add_node_addon(NAME koffi SOURCES ${KOFFI_SRC})
-target_include_directories(koffi PRIVATE . ../.. ../../vendor/node-addon-api)
+add_node_addon(NAME koffi SOURCES ${KOFFI_SRC} trampolines/prototypes.inc)
+target_include_directories(koffi PRIVATE . ../.. ../../vendor/node-addon-api "${CMAKE_CURRENT_BINARY_DIR}/trampolines")
 
 if(WIN32)
     set(UV_LINK_LIB "${CMAKE_CURRENT_BINARY_DIR}/uv.lib")

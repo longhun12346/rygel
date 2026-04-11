@@ -174,7 +174,4 @@ GetEIP:
     movl (%esp), %ecx
     ret
 
-# Trampolines
-# ----------------------------
-
-#include "trampolines/gnu.inc"
+#include "gnu.inc"
