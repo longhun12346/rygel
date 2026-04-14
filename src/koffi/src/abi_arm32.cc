@@ -38,6 +38,11 @@ extern "C" uint64_t ForwardCallXGG(const void *func, uint8_t *sp, uint8_t **out_
 extern "C" float ForwardCallXF(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 extern "C" HfaRet ForwardCallXDDDD(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 
+extern "C" uint8_t Trampoline0;
+extern "C" uint8_t TrampolineEnd;
+extern "C" void *FindTrampolineStart();
+extern "C" void *FindTrampolineEnd();
+
 static int IsHFA(const TypeInfo *type)
 {
 #if defined(__ARM_PCS_VFP)
@@ -1004,6 +1009,16 @@ void CallData::Relay(Size idx, uint8_t *sp)
 #undef RETURN_INTEGER_32
 
     err_guard.Disable();
+}
+
+void *FindTrampolineStart()
+{
+    return &Trampoline0;
+}
+
+void *FindTrampolineEnd()
+{
+    return &TrampolineEnd;
 }
 
 }

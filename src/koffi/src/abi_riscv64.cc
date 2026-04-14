@@ -48,6 +48,11 @@ extern "C" Fa0A0Ret ForwardCallXDG(const void *func, uint8_t *sp, uint8_t **out_
 extern "C" A0Fa0Ret ForwardCallXGD(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 extern "C" Fa0Fa1Ret ForwardCallXDD(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 
+extern "C" uint8_t Trampoline0;
+extern "C" uint8_t TrampolineEnd;
+extern "C" void *FindTrampolineStart();
+extern "C" void *FindTrampolineEnd();
+
 static inline void ExpandPair(const uint8_t raw[16], int size1, int size2, uint64_t out_regs[2])
 {
     memcpy(out_regs + 0, raw, size1);
@@ -901,6 +906,16 @@ void CallData::Relay(Size idx, uint8_t *sp)
 #undef RETURN_INTEGER
 
     err_guard.Disable();
+}
+
+void *FindTrampolineStart()
+{
+    return &Trampoline0;
+}
+
+void *FindTrampolineEnd()
+{
+    return &TrampolineEnd;
 }
 
 }

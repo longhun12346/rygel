@@ -99,6 +99,8 @@ ForwardCallXD:
 .global RelayCallback
 .global SwitchAndRelay
 .global RelayDirect
+.global FindTrampolineStart
+.global FindTrampolineEnd
 
 # First, make a copy of argument registers.
 # Then call the C function RelayCallback with the following arguments:
@@ -150,4 +152,15 @@ SwitchAndRelay:
     pop %rbp
     ret
 
+.align 4
+FindTrampolineStart:
+    leaq 16(%rip), %rax
+    andq $0xFFFFFFFFFFFFFFF0, %rax
+    ret
+.align 4
+
 #include "gnu.inc"
+
+FindTrampolineEnd:
+    leaq (%rip), %rax
+    ret

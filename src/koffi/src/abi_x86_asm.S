@@ -83,6 +83,8 @@ ForwardCallRD:
 .global RelayCallback
 .global SwitchAndRelay
 .global RelayDirect
+.global FindTrampolineStart
+.global FindTrampolineEnd
 
 # Call the C function RelayCallback with the following arguments:
 # static trampoline ID, the current stack pointer, a pointer to the stack arguments of this call,
@@ -108,8 +110,8 @@ RelayTrampoline:
     movl %eax, 0(%esp)
     movl %esp, 4(%esp)
     call GetEIP
-    addl $_GLOBAL_OFFSET_TABLE_, %ecx
-    call *RelayCallback@GOT(%ecx)
+    addl $_GLOBAL_OFFSET_TABLE_, %eax
+    call *RelayCallback@GOT(%eax)
     movl 44(%esp), %edx
     movl 36(%esp), %ecx
     movl %edx, 44(%esp, %ecx)
@@ -161,8 +163,8 @@ SwitchAndRelay:
     movl 16(%ebp), %eax
     movl %eax, 8(%esp)
     call GetEIP
-    addl $_GLOBAL_OFFSET_TABLE_, %ecx
-    call *RelayDirect@GOT(%ecx)
+    addl $_GLOBAL_OFFSET_TABLE_, %eax
+    call *RelayDirect@GOT(%eax)
     mov %ebp, %esp
     .cfi_def_cfa esp, 8
     pop %ebp
@@ -170,8 +172,20 @@ SwitchAndRelay:
     ret
     .cfi_endproc
 
-GetEIP:
-    movl (%esp), %ecx
+.align 4
+FindTrampolineStart:
+    call GetEIP
+    addl $16, %eax
+    andl $0xFFFFFFF0, %eax
     ret
+.align 4
 
 #include "gnu.inc"
+
+FindTrampolineEnd:
+    call GetEIP
+    ret
+
+GetEIP:
+    movl (%esp), %eax
+    ret
