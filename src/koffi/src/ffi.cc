@@ -1728,10 +1728,6 @@ extern "C" void RelayCallback(Size idx, uint8_t *sp)
         return;
     }
 
-    // Avoid triggering the "use callback beyond FFI" check
-    K_DEFER_C(generation = trampoline->generation) { trampoline->generation = generation; };
-    trampoline->generation = -1;
-
     if (std::this_thread::get_id() == instance->main_thread_id) {
         CallData call(env, instance, mem);
 
@@ -1745,6 +1741,35 @@ extern "C" void RelayCallback(Size idx, uint8_t *sp)
 
 extern "C" void RelayDirect(CallData *call, Size idx, uint8_t *sp)
 {
+    TrampolineInfo *trampoline = &shared.trampolines[idx];
+    Napi::Env env = trampoline->func.Env();
+
+#if defined(_WIN32)
+    TEB *teb = GetTEB();
+    InstanceData *instance = trampoline->instance;
+
+    // Restore previous stack limits at the end
+    K_DEFER_C(base = teb->StackBase,
+              limit = teb->StackLimit,
+              dealloc = teb->DeallocationStack) {
+        teb->StackBase = base;
+        teb->StackLimit = limit;
+        teb->DeallocationStack = dealloc;
+    };
+
+    // Adjust stack limits so SEH works correctly
+    teb->StackBase = instance->main_stack_max;
+    teb->StackLimit = instance->main_stack_min;
+    teb->DeallocationStack = instance->main_stack_min;
+#endif
+
+    if (env.IsExceptionPending()) [[unlikely]]
+        return;
+    if (!trampoline->used) [[unlikely]] {
+        ThrowError<Napi::Error>(env, "Cannot use non-registered callback beyond FFI call");
+        return;
+    }
+
     Napi::HandleScope scope(call->env);
     call->Relay(idx, sp);
 }
@@ -2020,7 +2045,7 @@ static Napi::Value RegisterCallback(const Napi::CallbackInfo &info)
     } else {
         trampoline->recv.Reset();
     }
-    trampoline->generation = -1;
+    trampoline->used = true;
 
     void *ptr = GetTrampoline(idx);
 
@@ -2072,6 +2097,7 @@ static Napi::Value UnregisterCallback(const Napi::CallbackInfo &info)
 
         trampoline->func.Reset();
         trampoline->recv.Reset();
+        trampoline->used = false;
 
         shared.available.Append(idx);
     }
@@ -2665,6 +2691,7 @@ InstanceData::~InstanceData()
                 trampoline->instance = nullptr;
                 trampoline->func.Reset();
                 trampoline->recv.Reset();
+                trampoline->used = false;
             }
         }
     }

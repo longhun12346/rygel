@@ -31,7 +31,6 @@ CallData::CallData(Napi::Env env, InstanceData *instance, InstanceMemory *mem)
     : env(env), instance(instance),
       mem(mem), old_stack_mem(mem->stack), old_heap_mem(mem->heap)
 {
-    mem->generation += !mem->depth;
     mem->depth++;
 
     K_ASSERT(AlignUp(mem->stack.ptr, 16) == mem->stack.ptr);
@@ -64,9 +63,9 @@ void CallData::Dispose()
             K_ASSERT(trampoline->instance == instance);
             K_ASSERT(!trampoline->func.IsEmpty());
 
-            trampoline->instance = nullptr;
             trampoline->func.Reset();
             trampoline->recv.Reset();
+            trampoline->used = false;
 
             shared.available.Append(idx);
         }
@@ -1142,7 +1141,7 @@ void *CallData::ReserveTrampoline(const FunctionInfo *proto, Napi::Function func
     trampoline->proto = proto;
     trampoline->func.Reset(func, 1);
     trampoline->recv.Reset();
-    trampoline->generation = (int32_t)mem->generation;
+    trampoline->used = true;
 
     void *ptr = GetTrampoline(idx);
 

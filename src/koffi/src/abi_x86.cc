@@ -441,31 +441,10 @@ Napi::Value CallData::Complete(const FunctionInfo *func)
 
 void CallData::Relay(Size idx, uint8_t *sp)
 {
+    const TrampolineInfo &trampoline = shared.trampolines[idx];
+
     uint8_t *caller_sp = sp + 48;
     BackRegisters *out_reg = (BackRegisters *)(sp + 16);
-
-    if (env.IsExceptionPending()) [[unlikely]]
-        return;
-
-#if defined(_WIN32)
-    TEB *teb = GetTEB();
-
-    // Restore previous stack limits at the end
-    K_DEFER_C(base = teb->StackBase,
-               limit = teb->StackLimit,
-               dealloc = teb->DeallocationStack) {
-        teb->StackBase = base;
-        teb->StackLimit = limit;
-        teb->DeallocationStack = dealloc;
-    };
-
-    // Adjust stack limits so SEH works correctly
-    teb->StackBase = instance->main_stack_max;
-    teb->StackLimit = instance->main_stack_min;
-    teb->DeallocationStack = instance->main_stack_min;
-#endif
-
-    const TrampolineInfo &trampoline = shared.trampolines[idx];
 
     const FunctionInfo *proto = trampoline.proto;
     Napi::Function func = trampoline.func.Value();
@@ -491,11 +470,6 @@ void CallData::Relay(Size idx, uint8_t *sp)
         out_reg->ret_type = 0;
         out_reg->ret_pop = pop;
     };
-
-    if (trampoline.generation >= 0 && trampoline.generation != (int32_t)mem->generation) [[unlikely]] {
-        ThrowError<Napi::Error>(env, "Cannot use non-registered callback beyond FFI call");
-        return;
-    }
 
     LocalArray<napi_value, MaxParameters + 1> arguments;
 

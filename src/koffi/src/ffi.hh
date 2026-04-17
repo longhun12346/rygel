@@ -249,8 +249,6 @@ struct InstanceMemory {
     Span<uint8_t> stack0;
     Span<uint8_t> heap;
 
-    uint16_t generation; // Can wrap without risk
-
     bool busy;
     bool temporary;
     int depth;
@@ -322,7 +320,7 @@ struct TrampolineInfo {
     Napi::FunctionReference func;
     Napi::Reference<Napi::Value> recv;
 
-    int32_t generation;
+    bool used;
 };
 
 struct SharedData {
