@@ -174,13 +174,13 @@ SwitchAndRelay:
     ret
     .cfi_endproc
 
-.align 4
+.balign 16
 FindTrampolineStart:
     call GetEIP
     addl $16, %eax
     andl $0xFFFFFFF0, %eax
     ret
-.align 4
+.balign 16
 
 #include "gnu.inc"
 
