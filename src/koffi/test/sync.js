@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2025 Niels Martignène <niels.martignene@protonmail.com>
 
-const koffi = require('../../koffi');
+const koffi = require('..');
 const assert = require('assert');
 const path = require('path');
 const util = require('util');
@@ -188,6 +188,7 @@ async function test() {
     const ThroughFloat1 = lib.func('Float1 ThroughFloat1(Float1 f1)');
     const PackFloat2 = lib.func('Float2 PackFloat2(float a, float b, _Out_ Float2 *out)');
     const ThroughFloat2 = lib.func('Float2 ThroughFloat2(Float2 f2)');
+    const ThroughFloat2Odd = lib.func('Float2 ThroughFloat2Odd(float a, float b, float c, float d, float e, float f, float g, float h, float i, Float2 f2)');
     const PackFloat3 = lib.func('Float3 PackFloat3(float a, float b, float c, _Out_ Float3 *out)');
     const ThroughFloat3 = lib.func('Float3 ThroughFloat3(Float3 f3)');
     const PackDouble2 = lib.func('Double2 PackDouble2(double a, double b, _Out_ Double2 *out)');
@@ -266,6 +267,7 @@ async function test() {
     const GetVariadicIntFunction = lib.func('VariadicIntFunc *GetVariadicIntFunction(const char *name)');
     const FillBufferDirect = lib.func('void FillBufferDirect(BufferInfo info, int c)');
     const FillBufferIndirect = lib.func('void FillBufferIndirect(const BufferInfo *info, int c)');
+    const FillBuffer = lib.func('void FillBuffer(void *ptr, int c, size_t len)');
     const GetLatin1String = lib.func('const uint8_t *GetLatin1String()');
     const BoolToInt = lib.func('int BoolToInt(bool a)');
     const BoolToMask12 = lib.func('unsigned int BoolToMask12(bool a, bool b, bool c, bool d, bool e, bool f,' +
@@ -354,6 +356,8 @@ async function test() {
         assert.deepEqual(f2, f2p);
         assert.deepEqual(ThroughFloat2({ a: 1.5, b: 3.0 }), f2);
         assert.deepEqual(ThroughFloat2(f2), f2);
+        assert.deepEqual(ThroughFloat2Odd(1, 2, 3, 4, 5, 6, 7, 8, 9, { a: 1.5, b: 3.0 }), f2);
+        assert.deepEqual(ThroughFloat2Odd(7, 8, 9, 10, 11, 12, 13, 14, 15, f2), f2);
 
         let f3p = {};
         let f3 = PackFloat3(20.0, 30.0, 40.0, f3p);
@@ -424,7 +428,7 @@ async function test() {
     }
 
     // Variadic
-    {
+    for (let i = 0; i < 10; i++) {
         let disposed = koffi.stats().disposed;
 
         let str = PrintFmt('foo %d %g %s', 'int', 200, 'double', 1.5, 'str', 'BAR');
@@ -789,6 +793,10 @@ async function test() {
 
         assert.deepEqual(buf1.ptr, Uint8Array.from([42, 42, 42, 42, 42, 42, 0, 0]));
         assert.deepEqual(buf2.ptr, Uint8Array.from([24, 24, 24, 24, 24, 24, 24, 24, 24, 24]));
+
+        FillBuffer(buf1.ptr, 27, 5);
+        FillBuffer(koffi.address(buf1.ptr) + 1n, 89, 2);
+        assert.deepEqual(buf1.ptr, Uint8Array.from([27, 89, 89, 27, 27, 42, 0, 0]));
     }
 
     // Allow users to skip members

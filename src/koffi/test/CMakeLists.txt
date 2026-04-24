@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Niels Martignène <niels.martignene@protonmail.com>
 
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.11)
 project(koffi_test C CXX)
 
 find_package(CNoke)
@@ -40,6 +40,7 @@ set_target_properties(union PROPERTIES PREFIX "")
 if(MSVC)
     add_library(win32_dep SHARED win32_dep.cc)
     set_target_properties(win32_dep PROPERTIES PREFIX "")
+    target_compile_options(win32_dep PRIVATE "/EHa")
 
     add_library(win32 SHARED win32.c)
     target_link_libraries(win32 PRIVATE win32_dep)

@@ -7,11 +7,13 @@ const fs = require('fs');
 const path = require('path');
 const tty = require('tty');
 
-const TSC_OPTIONS = '--target es2020 --module node16 --allowJs --checkJs --noEmit --resolveJsonModule'.split(' ');
+const TSC_OPTIONS = '--target es2020 --module node16 --allowJs --checkJs --noEmit --resolveJsonModule --strict false'.split(' ');
 
 main();
 
 function main() {
+    process.chdir(__dirname);
+
     try {
         if (!test())
             process.exit(1);
@@ -25,28 +27,42 @@ function test() {
     let scripts = {};
     let success = true;
 
-    scripts.Sync = 'sync.js';
-    scripts.Async = 'async.js';
-    scripts.Callbacks = 'callbacks.js';
-    scripts.Union = 'union.js';
+    scripts['Sync'] = ['sync.js'];
+    scripts['Async'] = ['async.js'];
+    scripts['Callbacks'] = ['callbacks.js'];
+    scripts['Union'] = ['union.js'];
     if (process.platform != 'win32' && process.platform != 'darwin')
-        scripts.POSIX = 'posix.js';
+        scripts['POSIX'] = ['posix.js'];
     if (process.platform == 'win32' && process.env.MSYSTEM == null)
-        scripts.Win32 = 'win32.js';
+        scripts['Win32'] = ['win32.js'];
     if (process.platform != 'darwin')
-        scripts.Raylib = 'raylib.js';
-    scripts.SQLite = 'sqlite.js';
+        scripts['Raylib'] = ['raylib.js'];
+    scripts['SQLite'] = ['sqlite.js'];
 
     for (let key in scripts) {
-        let filename = path.join(__dirname, scripts[key]);
-        success &= run('Test', key, [filename]);
+        let script = scripts[key][0];
+        let args = scripts[key].slice(1);
+
+        let filename = path.join(__dirname, script);
+        success &= run('Test', key, [filename, ...args]);
     }
 
-    for (let key in scripts) {
-        let filename = path.join(__dirname, scripts[key]);
-        let args = ['../../../vendor/typescript/tsc', ...TSC_OPTIONS, filename];
+    // Make sure tests compile in TypeScript mode
+    {
+        let tested = new Set;
 
-        success &= run('TypeScript', key, args);
+        for (let key in scripts) {
+            let script = scripts[key][0];
+
+            if (tested.has(script))
+                continue;
+            tested.add(script);
+
+            let filename = path.join(__dirname, script);
+            let args = ['../../../vendor/typescript/tsc', ...TSC_OPTIONS, filename];
+
+            success &= run('TypeScript', key, args);
+        }
     }
 
     return success;
@@ -67,20 +83,20 @@ function run(action, title, args) {
         }
 
         let time = Number((process.hrtime.bigint() - start) / 1000000n);
-        console.log(`>> ${action} ${title} ${style_ansi('[' + (time / 1000).toFixed(2) + 's]', 'green bold')}`);
+        console.log(`>> ${action} ${title} ${styleAnsi('[' + (time / 1000).toFixed(2) + 's]', 'green bold')}`);
 
         return true;
     } catch (err) {
-        console.log(`>> ${action} ${title} ${style_ansi('[error]', 'red bold')}`);
+        console.log(`>> ${action} ${title} ${styleAnsi('[error]', 'red bold')}`);
 
-        let str = '\n' + style_ansi(err.message.replace(/^/gm, ' '.repeat(3)), '33');
+        let str = '\n' + styleAnsi(err.message.replace(/^/gm, ' '.repeat(3)), '33');
         console.log(str);
 
         return false;
     }
 }
 
-function style_ansi(text, styles = []) {
+function styleAnsi(text, styles = []) {
     if (!tty.isatty(process.stdout.fd))
         return text;
 

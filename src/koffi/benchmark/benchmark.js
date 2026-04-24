@@ -9,61 +9,73 @@ const path = require('path');
 main();
 
 function main() {
+    process.chdir(__dirname);
+
     try {
-        let select = process.argv.slice(2);
-        benchmark(select);
+        let args = process.argv.slice(2);
+        benchmark(args);
     } catch (err) {
         console.error(err);
         process.exit(1);
     }
 }
 
-function benchmark(select) {
-    if (!select.length || select.includes('rand'))
-        format(run('rand', 'rand_napi'), 'ns');
-    if (!select.length || select.includes('atoi'))
-        format(run('atoi', 'atoi_napi'), 'ns');
-    if (!select.length || select.includes('raylib'))
-        format(run('raylib', 'raylib_node_raylib'), 'us');
-}
-
-function run(name, ref) {
+function benchmark(args) {
     let tests = [];
-    {
-        let entries = fs.readdirSync(__dirname);
+    let engines = [];
 
-        let re = new RegExp(name + '_[a-z0-9_]+\.js$');
-
-        for (let entry of entries) {
-            if (entry.match(re)) {
-                let test = {
-                    name: path.basename(entry, '.js'),
-                    filename: path.join(__dirname, entry)
-                };
-
-                if (test.name == ref)
-                    ref = test;
-                tests.push(test);
+    for (let arg of args) {
+        if (arg[0] == '-') {
+            switch (arg) {
+                case '--koffi': { engines.push('koffi'); } break;
+                default: throw new Error(`Unknown option ${arg}`);
             }
+        } else {
+            tests.push(arg);
         }
     }
 
-    if (typeof ref == 'string')
-        throw new Error('Failed to find reference test');
+    if (!tests.length) {
+        tests.push('rand', 'atoi', 'qsort', 'memset');
 
-    for (let test of tests) {
-        let proc = spawnSync(process.execPath, [test.filename]);
-
-        if (proc.status == null)
-            throw new Error(proc.error);
-        if (proc.status !== 0)
-            throw new Error(proc.stderr || proc.stdout);
-
-        let perf = JSON.parse(proc.stdout);
-
-        test.iterations = perf.iterations;
-        test.time = perf.time;
+        if (process.platform != 'darwin')
+            tests.push('raylib');
     }
+
+    if (tests.includes('rand'))
+        format('rand', run('rand.js', 'napi', engines), 'ns');
+    if (tests.includes('atoi'))
+        format('atoi', run('atoi.js', 'napi', engines), 'ns');
+    if (tests.includes('qsort'))
+        format('qsort', run('qsort.js', 'napi', engines), 'ns');
+    if (tests.includes('memset'))
+        format('memset', run('memset.js', 'napi', engines), 'ns');
+    if (tests.includes('raylib'))
+        format('raylib', run('raylib.js', 'napi', engines), 'us');
+}
+
+function run(basename, ref, engines = []) {
+    if (engines.length)
+        engines = [ref, ...engines];
+
+    let filename = path.join(__dirname, basename);
+    let proc = spawnSync(process.execPath, [...process.execArgv, filename, ...engines]);
+
+    if (proc.status == null)
+        throw new Error(proc.error);
+    if (proc.status != 0) {
+        let output = proc.stderr?.toString?.('utf-8')?.trim?.() ||
+                     proc.stdout?.toString?.('utf-8')?.trim?.() ||
+                     'Unknown error';
+        throw new Error(output);
+    }
+
+    let results = JSON.parse(proc.stdout.toString('utf-8'));
+    let tests = Object.keys(results).map(name => ({ name: name, ...results[name] }));
+
+    if (!Object.hasOwn(results, ref))
+        throw new Error('Failed to find reference test');
+    ref = results[ref];
 
     for (let test of tests) {
         test.ratio = (ref.time / ref.iterations) / (test.time / test.iterations);
@@ -80,13 +92,13 @@ function run(name, ref) {
     return tests;
 }
 
-function format(tests, unit) {
-    let len0 = tests.reduce((acc, test) => Math.max(acc, test.name.length), 0);
+function format(name, tests, unit) {
+    let len0 = Math.max(name.length, ...tests.map(test => test.name.length));
 
-    console.log(`${'Benchmark'.padEnd(len0, ' ')} | Iteration time | Relative performance | Overhead`);
+    console.log(`${name.padEnd(len0, ' ')} | Iteration time | Relative performance | Overhead`);
     console.log(`${'-'.padEnd(len0, '-')} | -------------- | -------------------- | --------`);
     for (let test of tests) {
-        let time = format_time(test.time / test.iterations, unit);
+        let time = formatTime(test.time / test.iterations, unit);
         let ratio = test.ratio.toFixed(test.ratio < 0.01 ? 3 : 2);
         let overhead = (typeof test.overhead == 'number') ? `${test.overhead >= 0 ? '+' : ''}${test.overhead}%` : test.overhead;
 
@@ -96,7 +108,7 @@ function format(tests, unit) {
     console.log('');
 }
 
-function format_time(time, unit) {
+function formatTime(time, unit) {
     switch (unit) {
         case 'ms': { return (time * 1).toFixed(1) + ' ms'; } break;
         case 'us': { return (time * 1000).toFixed(1) + ' µs'; } break;

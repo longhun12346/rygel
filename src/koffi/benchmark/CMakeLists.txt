@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Niels Martignène <niels.martignene@protonmail.com>
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.11)
 project(koffi_benchmark C CXX)
 
 find_package(CNoke)
@@ -39,6 +39,33 @@ if(WIN32)
     target_link_libraries(rand_napi PRIVATE ws2_32)
 else()
     target_link_libraries(rand_napi PRIVATE dl)
+endif()
+
+# ---- qsort ----
+
+add_node_addon(NAME qsort_napi SOURCES qsort_napi.cc ../../../lib/native/base/base.cc)
+target_include_directories(qsort_napi PRIVATE ../../.. ../../../vendor/node-addon-api)
+target_link_libraries(qsort_napi PRIVATE Threads::Threads)
+
+if(WIN32)
+    target_compile_definitions(qsort_napi PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_DEPRECATE)
+    target_link_libraries(qsort_napi PRIVATE ws2_32)
+else()
+    target_link_libraries(qsort_napi PRIVATE dl)
+endif()
+
+# ---- memset ----
+
+add_node_addon(NAME memset_napi SOURCES memset_napi.cc ../../../lib/native/base/base.cc)
+target_include_directories(memset_napi PRIVATE ../../.. ../../../vendor/node-addon-api)
+target_link_libraries(memset_napi PRIVATE Threads::Threads)
+
+if(WIN32)
+    target_compile_definitions(memset_napi PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_DEPRECATE)
+    target_link_libraries(memset_napi PRIVATE ws2_32)
+else()
+    target_compile_options(memset_napi PRIVATE -fno-builtin-memset)
+    target_link_libraries(memset_napi PRIVATE dl)
 endif()
 
 # ---- Raylib ----
