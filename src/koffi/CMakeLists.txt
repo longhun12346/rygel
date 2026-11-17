@@ -133,6 +133,14 @@ endif()
 add_node_addon(NAME koffi SOURCES ${KOFFI_SRC} trampolines/gnu.inc)
 target_include_directories(koffi PRIVATE . ../.. ../../vendor/node-addon-api "${CMAKE_CURRENT_BINARY_DIR}/trampolines")
 
+if(MSVC)
+    # Produce koffi.pdb next to koffi.node without changing the generated code: /Z7 keeps compile-time debug
+    # info in the objects (no shared vc*.pdb), and /DEBUG would otherwise disable the default /OPT:REF,ICF.
+    # The PDB path stored in the binary is the bare file name, not the build machine path.
+    target_compile_options(koffi PRIVATE $<$<OR:$<COMPILE_LANGUAGE:C>,$<COMPILE_LANGUAGE:CXX>>:/Z7>)
+    target_link_options(koffi PRIVATE /DEBUG /OPT:REF /OPT:ICF /PDBALTPATH:koffi.pdb)
+endif()
+
 if(WIN32)
     set(UV_LINK_LIB "${CMAKE_CURRENT_BINARY_DIR}/uv.lib")
     if(MSVC)

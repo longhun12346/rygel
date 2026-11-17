@@ -284,7 +284,7 @@ async function build() {
             let dest_dir = binary_dir + '/' + path.basename(artifact);
 
             fs.mkdirSync(dest_dir, { mode: 0o755 });
-            copy_recursive(artifact, dest_dir);
+            copy_recursive(artifact, dest_dir, filename => !filename.endsWith('.pdb'));
         }
 
         let pkg = JSON.parse(json);
