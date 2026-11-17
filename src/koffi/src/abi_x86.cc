@@ -12,6 +12,9 @@
 #endif
 
 #include <napi.h>
+#if defined(_MSC_VER)
+    #include <intrin.h>
+#endif
 
 namespace K {
 
@@ -26,12 +29,160 @@ struct BackRegisters {
     int ret_pop;
 };
 
+#if defined(K_NO_STACK_SWITCH)
+extern "C" uint64_t ForwardCallG(const void *func, uint8_t *sp, Size size);
+extern "C" float ForwardCallF(const void *func, uint8_t *sp, Size size);
+extern "C" double ForwardCallD(const void *func, uint8_t *sp, Size size);
+extern "C" uint64_t ForwardCallRG(const void *func, uint8_t *sp, Size size);
+extern "C" float ForwardCallRF(const void *func, uint8_t *sp, Size size);
+extern "C" double ForwardCallRD(const void *func, uint8_t *sp, Size size);
+#else
 extern "C" uint64_t ForwardCallG(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 extern "C" float ForwardCallF(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 extern "C" double ForwardCallD(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 extern "C" uint64_t ForwardCallRG(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 extern "C" float ForwardCallRF(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 extern "C" double ForwardCallRD(const void *func, uint8_t *sp, uint8_t **out_old_sp);
+#endif
+
+#if defined(K_FIBER)
+
+extern "C" {
+    __declspec(dllimport) void *__stdcall ConvertThreadToFiberEx(void *param, unsigned long flags);
+    __declspec(dllimport) int __stdcall ConvertFiberToThread(void);
+    __declspec(dllimport) void *__stdcall CreateFiberEx(size_t commit, size_t reserve, unsigned long flags, void (__stdcall *proc)(void *), void *param);
+    __declspec(dllimport) void __stdcall DeleteFiber(void *fiber);
+    __declspec(dllimport) void __stdcall SwitchToFiber(void *fiber);
+    __declspec(dllimport) int __stdcall IsThreadAFiber(void);
+}
+static const unsigned long FIBER_FLAG_FLOAT_SWITCH = 1;
+#define WINAPI __stdcall
+static inline void *GetCurrentFiber() { return (void *)__readfsdword(0x10); }
+
+extern "C" void RelayDirect(CallData *call, Size idx, uint8_t *sp);
+
+enum { FiberKindG, FiberKindF, FiberKindD };
+
+struct FiberJob {
+    const void *native;
+    uint8_t *sp;
+    Size size;
+    int kind;
+    bool fast;
+
+    uint64_t resG;
+    float resF;
+    double resD;
+
+    void *caller;
+    bool done;
+
+    bool relay;
+    CallData *relay_call;
+    Size relay_idx;
+    uint8_t *relay_sp;
+};
+
+struct FiberSlot {
+    void *fiber = nullptr;
+    FiberJob *job = nullptr;
+};
+
+struct FiberThread {
+    FiberSlot slots[1024];
+    int depth = 0;
+    bool converted = false;
+
+    ~FiberThread()
+    {
+        for (FiberSlot &slot: slots) {
+            if (slot.fiber) {
+                DeleteFiber(slot.fiber);
+            }
+        }
+        if (converted) {
+            ConvertFiberToThread();
+        }
+    }
+};
+
+static thread_local FiberThread fiber_thread;
+
+static void WINAPI FiberMain(void *param)
+{
+    FiberSlot *slot = (FiberSlot *)param;
+
+    for (;;) {
+        FiberJob *job = slot->job;
+
+        switch (job->kind) {
+            case FiberKindG: { job->resG = job->fast ? ForwardCallRG(job->native, job->sp, job->size) : ForwardCallG(job->native, job->sp, job->size); } break;
+            case FiberKindF: { job->resF = job->fast ? ForwardCallRF(job->native, job->sp, job->size) : ForwardCallF(job->native, job->sp, job->size); } break;
+            case FiberKindD: { job->resD = job->fast ? ForwardCallRD(job->native, job->sp, job->size) : ForwardCallD(job->native, job->sp, job->size); } break;
+        }
+
+        job->done = true;
+        SwitchToFiber(job->caller);
+    }
+}
+
+static void RunOnFiber(FiberJob *job)
+{
+    FiberThread &ft = fiber_thread;
+
+    if (!IsThreadAFiber()) {
+        ft.converted = !!ConvertThreadToFiberEx(nullptr, FIBER_FLAG_FLOAT_SWITCH);
+    }
+    K_ASSERT(ft.depth < K_LEN(ft.slots));
+
+    FiberSlot *slot = &ft.slots[ft.depth];
+    if (!slot->fiber) {
+        slot->fiber = CreateFiberEx(64 * 1024, 1024 * 1024, FIBER_FLAG_FLOAT_SWITCH, FiberMain, slot);
+        K_ASSERT(slot->fiber);
+    }
+
+    job->caller = GetCurrentFiber();
+    job->done = false;
+    job->relay = false;
+    slot->job = job;
+
+    ft.depth++;
+    K_DEFER { ft.depth--; };
+
+    SwitchToFiber(slot->fiber);
+    while (!job->done) {
+        K_ASSERT(job->relay);
+        job->relay = false;
+
+        RelayDirect(job->relay_call, job->relay_idx, job->relay_sp);
+
+        SwitchToFiber(slot->fiber);
+    }
+}
+
+bool RelayFromFiber(CallData *call, Size idx, uint8_t *sp)
+{
+    FiberThread &ft = fiber_thread;
+
+    if (ft.depth <= 0)
+        return false;
+
+    FiberSlot *slot = &ft.slots[ft.depth - 1];
+    if (GetCurrentFiber() != slot->fiber)
+        return false;
+
+    FiberJob *job = slot->job;
+
+    job->relay = true;
+    job->relay_call = call;
+    job->relay_idx = idx;
+    job->relay_sp = sp;
+
+    SwitchToFiber(job->caller);
+    return true;
+}
+
+#endif
 
 bool AnalyseFunction(Napi::Env env, InstanceData *instance, FunctionInfo *func)
 {
@@ -292,7 +443,14 @@ bool CallData::Prepare(const FunctionInfo *func, const Napi::CallbackInfo &info)
 
 void CallData::Execute(const FunctionInfo *func, void *native)
 {
-#if defined(_WIN32)
+#if defined(K_NO_STACK_SWITCH)
+    // Native code runs on the real thread stack, so the TEB stack fields and SEH chain stay valid
+    TEB *teb = GetTEB();
+
+    K_DEFER { instance->last_error = teb->LastErrorValue; };
+
+    teb->LastErrorValue = instance->last_error;
+#elif defined(_WIN32)
     TEB *teb = GetTEB();
 
     // Restore previous stack limits at the end
@@ -323,12 +481,33 @@ void CallData::Execute(const FunctionInfo *func, void *native)
     teb->LastErrorValue = instance->last_error;
 #endif
 
-#define PERFORM_CALL(Suffix) \
-        ([&]() { \
-            auto ret = (func->fast ? ForwardCallR ## Suffix(native, new_sp, &old_sp) \
-                                   : ForwardCall ## Suffix(native, new_sp, &old_sp)); \
-            return ret; \
-        })()
+#if defined(K_FIBER)
+    #define PERFORM_CALL(Suffix) \
+            ([&]() { \
+                FiberJob job = {}; \
+                job.native = native; \
+                job.sp = new_sp; \
+                job.size = func->args_size; \
+                job.kind = FiberKind ## Suffix; \
+                job.fast = !!func->fast; \
+                RunOnFiber(&job); \
+                return job.res ## Suffix; \
+            })()
+#elif defined(K_NO_STACK_SWITCH)
+    #define PERFORM_CALL(Suffix) \
+            ([&]() { \
+                auto ret = (func->fast ? ForwardCallR ## Suffix(native, new_sp, func->args_size) \
+                                       : ForwardCall ## Suffix(native, new_sp, func->args_size)); \
+                return ret; \
+            })()
+#else
+    #define PERFORM_CALL(Suffix) \
+            ([&]() { \
+                auto ret = (func->fast ? ForwardCallR ## Suffix(native, new_sp, &old_sp) \
+                                       : ForwardCall ## Suffix(native, new_sp, &old_sp)); \
+                return ret; \
+            })()
+#endif
 
     // Execute and convert return value
     switch (func->ret.type->primitive) {

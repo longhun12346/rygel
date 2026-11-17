@@ -9,6 +9,14 @@
 
 namespace K {
 
+// Spike: on 32-bit MSVC Windows, run native code on the real thread stack instead of the Koffi stack.
+// The Koffi stack remains the arena that holds marshalled arguments, which are copied to the thread stack at call time.
+#if defined(_MSC_VER) && defined(_M_IX86)
+    #define K_NO_STACK_SWITCH
+    // Spike: native calls run on a per-thread, per-depth Windows fiber. Callbacks switch back to the calling fiber.
+    #define K_FIBER
+#endif
+
 static const Size DefaultSyncStackSize = Mebibytes(1);
 static const Size DefaultSyncHeapSize = Mebibytes(2);
 static const Size DefaultAsyncStackSize = Kibibytes(128);

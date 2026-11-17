@@ -14,17 +14,41 @@ public ForwardCallRD
 .model flat, C
 .code
 
-; Copy function pointer to EAX, in order to save it through argument forwarding.
-; Also make a copy of the SP to CallData::old_sp because the callback system might need it.
-; Save ESP in EBX (non-volatile), and use carefully assembled stack provided by caller.
+; Copy the marshalled arguments (size bytes at sp) to a freshly reserved, 16-byte aligned area
+; of the real thread stack, so that native code runs on the normal stack.
+; Pages are touched one by one when the area is large, to let the guard page mechanism grow the stack.
+; EBP keeps the frame, ESI and EDI (non-volatile) are used for the copy and restored in the epilogue.
+; The function pointer ends up in EAX, to save it through argument forwarding.
 prologue macro
+    local probe, done, copy, copied
     endbr32
     push ebp
     mov ebp, esp
-    mov eax, dword ptr [esp+16]
-    mov dword ptr [eax+0], esp
-    mov eax, dword ptr [esp+8]
-    mov esp, dword ptr [esp+12]
+    push esi
+    push edi
+    mov ecx, dword ptr [ebp+16]
+    mov esi, dword ptr [ebp+12]
+    mov eax, ecx
+probe:
+    cmp eax, 4096
+    jb done
+    sub esp, 4096
+    test dword ptr [esp], eax
+    sub eax, 4096
+    jmp probe
+done:
+    sub esp, eax
+    and esp, -16
+    test dword ptr [esp], eax
+    mov edi, esp
+copy:
+    sub ecx, 4
+    jb copied
+    mov edx, dword ptr [esi+ecx]
+    mov dword ptr [edi+ecx], edx
+    jmp copy
+copied:
+    mov eax, dword ptr [ebp+8]
 endm
 
 fastcall macro
@@ -38,7 +62,9 @@ endm
 ; The return value is passed back untouched.
 epilogue macro
     call eax
-    mov esp, ebp
+    lea esp, dword ptr [ebp-8]
+    pop edi
+    pop esi
     pop ebp
     ret
 endm
@@ -80,8 +106,6 @@ ForwardCallRD endp
 ; ----------------------------
 
 extern RelayCallback : PROC
-public SwitchAndRelay
-extern RelayDirect : PROC
 
 ; Call the C function RelayCallback with the following arguments:
 ; static trampoline ID, the current stack pointer, a pointer to the stack arguments of this call,
@@ -94,7 +118,7 @@ extern RelayDirect : PROC
 trampoline macro ID
     endbr32
     mov eax, ID
-    jmp RelayTrampoline
+    jmp near ptr RelayTrampoline
 endm
 
 RelayTrampoline proc
@@ -125,33 +149,6 @@ l2:
     lea esp, dword ptr [esp+ecx+44]
     ret
 RelayTrampoline endp
-
-; When a callback is relayed, Koffi will call into Node.js and V8 to execute Javascript.
-; The problem is that we're still running on the separate Koffi stack, and V8 will
-; probably misdetect this as a "stack overflow". We have to restore the old
-; stack pointer, call Node.js/V8 and go back to ours.
-SwitchAndRelay proc
-    endbr32
-    push ebp
-    mov ebp, esp
-    mov ecx, dword ptr [esp+24]
-    mov eax, esp
-    sub eax, dword ptr [ecx+0]
-    and eax, -16
-    mov dword ptr [ecx+4], eax
-    mov esp, dword ptr [esp+20]
-    sub esp, 24
-    mov eax, dword ptr [ebp+8]
-    mov dword ptr [esp+0], eax
-    mov eax, dword ptr [ebp+12]
-    mov dword ptr [esp+4], eax
-    mov eax, dword ptr [ebp+16]
-    mov dword ptr [esp+8], eax
-    call RelayDirect
-    mov esp, ebp
-    pop ebp
-    ret
-SwitchAndRelay endp
 
 align 16
 FindTrampolineStart proc

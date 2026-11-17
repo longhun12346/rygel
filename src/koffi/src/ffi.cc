@@ -39,7 +39,13 @@ SharedData shared;
 
 static thread_local CallData *exec_call;
 
+#if !defined(K_NO_STACK_SWITCH)
 extern "C" napi_value SwitchAndRelay(CallData *call, Size idx, uint8_t *sp, uint8_t *saved_sp, Span<uint8_t> *new_stack);
+#endif
+extern "C" void RelayDirect(CallData *call, Size idx, uint8_t *sp);
+#if defined(K_FIBER)
+bool RelayFromFiber(CallData *call, Size idx, uint8_t *sp);
+#endif
 
 static bool ChangeSize(const char *name, Napi::Value value, Size min_size, Size max_size, Size *out_size)
 {
@@ -1431,7 +1437,7 @@ InstanceMemory *AllocateMemory(InstanceData *instance, Size stack_size, Size hea
     // Keep real stack limits intact, in case we need them
     mem->stack0 = mem->stack;
 
-#if defined(_WIN32) && !defined(_WIN64)
+#if defined(_WIN32) && !defined(_WIN64) && !defined(K_NO_STACK_SWITCH)
     mem->stack.len -= 16;
 
     // Prepare at the top SEH frame record
@@ -1709,8 +1715,16 @@ extern "C" void RelayCallback(Size idx, uint8_t *sp)
     // It should be easy, but in this case we are running on the custom Koffi stack, which will trip up
     // Node and V8. So we need to switch back to the normal/main stack.
     if (call && std::this_thread::get_id() == call->instance->main_thread_id) {
+#if defined(K_FIBER)
+        if (RelayFromFiber(call, idx, sp))
+            return;
+#elif defined(K_NO_STACK_SWITCH)
+        RelayDirect(call, idx, sp);
+        return;
+#else
         SwitchAndRelay(call, idx, sp, call->old_sp, &call->mem->stack);
         return;
+#endif
     }
 
     // Otherwise, we need to allocate memory to perform the callback.
@@ -1744,7 +1758,7 @@ extern "C" void RelayDirect(CallData *call, Size idx, uint8_t *sp)
     TrampolineInfo *trampoline = &shared.trampolines[idx];
     Napi::Env env = trampoline->func.Env();
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(K_NO_STACK_SWITCH)
     TEB *teb = GetTEB();
     InstanceData *instance = trampoline->instance;
 
