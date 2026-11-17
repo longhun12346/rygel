@@ -26,12 +26,21 @@ struct BackRegisters {
     int ret_pop;
 };
 
+#if defined(K_NO_STACK_SWITCH)
+extern "C" uint64_t ForwardCallG(const void *func, uint8_t *sp, Size size);
+extern "C" float ForwardCallF(const void *func, uint8_t *sp, Size size);
+extern "C" double ForwardCallD(const void *func, uint8_t *sp, Size size);
+extern "C" uint64_t ForwardCallRG(const void *func, uint8_t *sp, Size size);
+extern "C" float ForwardCallRF(const void *func, uint8_t *sp, Size size);
+extern "C" double ForwardCallRD(const void *func, uint8_t *sp, Size size);
+#else
 extern "C" uint64_t ForwardCallG(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 extern "C" float ForwardCallF(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 extern "C" double ForwardCallD(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 extern "C" uint64_t ForwardCallRG(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 extern "C" float ForwardCallRF(const void *func, uint8_t *sp, uint8_t **out_old_sp);
 extern "C" double ForwardCallRD(const void *func, uint8_t *sp, uint8_t **out_old_sp);
+#endif
 
 bool AnalyseFunction(Napi::Env env, InstanceData *instance, FunctionInfo *func)
 {
@@ -292,7 +301,14 @@ bool CallData::Prepare(const FunctionInfo *func, const Napi::CallbackInfo &info)
 
 void CallData::Execute(const FunctionInfo *func, void *native)
 {
-#if defined(_WIN32)
+#if defined(K_NO_STACK_SWITCH)
+    // Native code runs on the real thread stack, so the TEB stack fields and SEH chain stay valid
+    TEB *teb = GetTEB();
+
+    K_DEFER { instance->last_error = teb->LastErrorValue; };
+
+    teb->LastErrorValue = instance->last_error;
+#elif defined(_WIN32)
     TEB *teb = GetTEB();
 
     // Restore previous stack limits at the end
@@ -323,12 +339,21 @@ void CallData::Execute(const FunctionInfo *func, void *native)
     teb->LastErrorValue = instance->last_error;
 #endif
 
-#define PERFORM_CALL(Suffix) \
-        ([&]() { \
-            auto ret = (func->fast ? ForwardCallR ## Suffix(native, new_sp, &old_sp) \
-                                   : ForwardCall ## Suffix(native, new_sp, &old_sp)); \
-            return ret; \
-        })()
+#if defined(K_NO_STACK_SWITCH)
+    #define PERFORM_CALL(Suffix) \
+            ([&]() { \
+                auto ret = (func->fast ? ForwardCallR ## Suffix(native, new_sp, func->args_size) \
+                                       : ForwardCall ## Suffix(native, new_sp, func->args_size)); \
+                return ret; \
+            })()
+#else
+    #define PERFORM_CALL(Suffix) \
+            ([&]() { \
+                auto ret = (func->fast ? ForwardCallR ## Suffix(native, new_sp, &old_sp) \
+                                       : ForwardCall ## Suffix(native, new_sp, &old_sp)); \
+                return ret; \
+            })()
+#endif
 
     // Execute and convert return value
     switch (func->ret.type->primitive) {
